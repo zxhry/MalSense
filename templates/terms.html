@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Terms of Use - MalSense{% endblock %}
+{% block content %}
+<div class="wrap legal">
+  <a class="back" href="{{ url_for('home') }}">&larr; Back to home</a>
+  <span class="chip"><i></i>Educational project</span>
+  <h1 class="legal-title">Terms of Use</h1>
+  <p class="legal-updated">Last updated: {{ LEGAL_UPDATED }} &middot; <a href="{{ url_for('privacy') }}">Privacy Policy</a></p>
+
+  <div class="legal-summary card">
+    <h4>In short</h4>
+    <ul>
+      <li><b>MalSense is an educational tool</b>, built as a final-year project at USIM. It helps you understand Android malware.</li>
+      <li><b>Its results can be wrong.</b> Use them as advice, not as a guarantee, and do not rely on MalSense alone to protect your phone.</li>
+      <li><b>Only upload files you are allowed to share</b>, and never use MalSense to harm anyone.</li>
+    </ul>
+  </div>
+
+  <section class="legal-sec">
+    <h2>1. What MalSense is</h2>
+    <p>MalSense checks Android app files (APKs) for signs of malware. An AI model (XGBoost) studies the permissions and structure
+      of the app, VirusTotal's antivirus engines double-check the file's fingerprint, and MalSense explains the result in plain
+      language. It also offers security-awareness quizzes, a Mobile Security Checklist and Digital Amanah guidance.
+      By using MalSense you agree to these terms and to the <a href="{{ url_for('privacy') }}">Privacy Policy</a>.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>2. Results are guidance, not a guarantee</h2>
+    <ul>
+      <li>MalSense uses <b>static analysis</b> only &ndash; it reads the app without running it, so it cannot see everything an
+        app does once installed.</li>
+      <li>The AI model is about 97% accurate on its test data, which means some malware can be missed (a <b>false negative</b>)
+        and some safe apps can be flagged (a <b>false positive</b>).</li>
+      <li>MalSense is <b>not a replacement</b> for official app stores, Google Play Protect or professional security tools.
+        You decide whether to install an app, and you are responsible for that decision.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>3. Using MalSense responsibly</h2>
+    <p>You agree that you will <b>not</b>:</p>
+    <ul>
+      <li>upload files you do not have the right to share, or files containing other people's personal data;</li>
+      <li>use MalSense, its reports or its quiz content to create, improve or spread malware, or to harm any person or system;</li>
+      <li>try to break, overload or get around the website's security (for example automated mass uploads);</li>
+      <li>create accounts with false details or use someone else's account.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>4. Accounts</h2>
+    <ul>
+      <li>You can scan as a guest. An account (email and password, or Google) adds scan history and downloadable reports.</li>
+      <li>Keep your password private. You are responsible for activity on your account.</li>
+      <li>The administrator may deactivate accounts that break these terms.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>5. Reporting APKs</h2>
+    <p>When you report an APK, you allow the administrator to keep it in quarantine, analyse it, and use it to retrain and improve
+      the AI model. Do not install a suspicious app to report it &ndash; just send the file.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>6. Outside services</h2>
+    <p>MalSense uses VirusTotal (antivirus results), Google Gemini (quiz questions) and Google sign-in. These services have their
+      own terms, and their availability and limits are outside MalSense's control &ndash; for example, a VirusTotal result may
+      be missing when the free daily limit is reached.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>7. AI and generated content</h2>
+    <ul>
+      <li>MalSense uses two kinds of AI: an <b>XGBoost model</b> that classifies an APK as malware or benign, and
+        <b>Google Gemini</b>, which writes quiz questions from the findings of a scan.</li>
+      <li><b>Both can be wrong.</b> Quiz questions are AI-generated and may contain mistakes or be unclear. Check anything
+        important with a trusted source.</li>
+      <li>The results, explanations, advice and quizzes are for learning. They are not professional security, legal or
+        religious advice. If you think your phone is infected or you may have lost money, contact your bank or a
+        qualified professional.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>8. Content and credits</h2>
+    <ul>
+      <li>The Mobile Security Checklist is adapted (rewritten, not copied) from the Mobile Security Checklist poster by
+        Sandbox Security (sandboxsecurity.ai).</li>
+      <li>Antivirus results come from VirusTotal. Attacker techniques are described using MITRE ATT&amp;CK for Mobile.
+        The AI model was trained on the KronoDroid dataset (Guerra-Manzanares, Bahsi and N&otilde;mm, 2021).</li>
+      <li>Quran verses on the Digital Amanah page follow the Sahih International English translation. Digital Amanah gives
+        general reminders that encourage safe digital habits. <b>It is not a religious ruling (fatwa).</b> For religious
+        questions, please ask a qualified teacher or scholar.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>9. No warranty</h2>
+    <p>MalSense is provided free of charge, &ldquo;as is&rdquo;, for education and research. As far as the law allows, the project
+      team and USIM are not responsible for any loss or damage resulting from using MalSense or relying on its results.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>10. Changes and contact</h2>
+    <p>These terms may be updated as MalSense changes; the date at the top shows the latest version. Questions:
+      please use the <a href="{{ url_for('feedback') }}">Feedback form</a>.</p>
+  </section>
+</div>
+{% endblock %}

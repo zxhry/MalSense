@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/
+uploads/
+reported_apks/
+quiz_cache/
+samples/
+models/backup/
+docs/*.old

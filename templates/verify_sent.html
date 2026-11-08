@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Verify your email - MalSense{% endblock %}
+{% block content %}
+<div class="auth">
+  <div class="avatar"><svg width="24" height="20" viewBox="0 0 24 20" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="1.5" y="1.5" width="21" height="17" rx="2"/><path d="M2 3l10 8 10-8"/></svg></div>
+  <h2>Check your inbox</h2>
+  <form method="post" action="{{ url_for('verify_resend') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="authtext">We sent a verification link to <b>{{ email }}</b>. Click the link in that email to activate your
+      account, then log in. The link expires in 24 hours.</p>
+    <p class="authtext small">Can't find it? Check your <b>spam / junk</b> folder, or send it again (once a minute).</p>
+    <input type="hidden" name="email" value="{{ email }}">
+    <button class="btn-white" type="submit">Send the link again</button>
+    <p class="switch">Already verified? <a href="{{ url_for('login') }}">Log in</a></p>
+  </form>
+</div>
+{% endblock %}

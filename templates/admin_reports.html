@@ -1,0 +1,60 @@
+{% extends "admin_base.html" %}
+{% block title %}Reports - MalSense Admin{% endblock %}
+{% block admin %}
+<h2 class="pagetitle">Reported APKs</h2>
+<p class="small" style="max-width:820px">APKs users sent because MalSense could not analyse them or the result looked wrong.
+  <b>Analyse</b> runs the scanner and VirusTotal to help you decide. <b>Add as malware / benign</b> stores the app's
+  features in <span class="mono">data/new_samples.csv</span> (KronoDroid itself is not changed) &ndash; then press
+  <a href="{{ url_for('admin_model') }}">Retrain model</a>. Only add an app when you are sure of its label
+  (e.g. many VirusTotal engines agree), otherwise the model learns mistakes.</p>
+
+<div class="stats">
+  <div class="stat"><span>New reports</span><b>{{ counts.get("new", 0) }}</b></div>
+  <div class="stat"><span>Added to training</span><b>{{ counts.get("added_malware", 0) + counts.get("added_benign", 0) }}</b></div>
+  <div class="stat"><span>Samples waiting</span><b>{{ samples.waiting }}</b></div>
+  <div class="stat"><span>Dismissed</span><b>{{ counts.get("dismissed", 0) }}</b></div>
+</div>
+
+<div class="tabs">
+  {% for key, label in [("new", "New"), ("added_malware", "Added as malware"), ("added_benign", "Added as benign"), ("dismissed", "Dismissed"), ("all", "All")] %}
+  <a href="{{ url_for('admin_reports', status=key) }}" class="{{ 'on' if status_f == key }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="card tablecard">
+  <table class="logs">
+    <thead><tr><th>#</th><th>File</th><th>Reason / details</th><th>From</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for r in reports %}
+      {% set u = users.get(r.user_id) %}
+      <tr class="reportrow">
+        <td>{{ reports|length - loop.index0 }}</td>
+        <td title="SHA-256: {{ r.file_hash }}">{{ r.filename }}
+          <div class="small mono">{{ r.file_hash[:16] }}&hellip; &middot; {{ "%.1f"|format(r.file_size / 1048576) }} MB</div></td>
+        <td>{{ r.REASONS.get(r.reason, r.reason) }}{% if r.message %}<div class="msg">{{ r.message }}</div>{% endif %}</td>
+        <td>{{ u.username if u else "Guest" }}{% if r.contact_email %}<div class="small">{{ r.contact_email }}</div>{% endif %}</td>
+        <td>{{ r.created_at.strftime("%d %b %Y, %H:%M") }}</td>
+        <td><span class="status {{ r.status }}">{{ r.STATUSES[r.status] }}</span></td>
+        <td>
+          <a class="btn-mini" href="{{ url_for('admin_report_download', report_id=r.report_id) }}" title="Download the APK (saved as .quarantine)">Download</a>
+          {% for action, label, cls, show in [("analyse", "Analyse", "", true),
+                                               ("add_malware", "Add as malware", "mal", r.status == "new"),
+                                               ("add_benign", "Add as benign", "ben", r.status == "new"),
+                                               ("dismiss", "Dismiss", "", r.status == "new"),
+                                               ("reopen", "Undo", "", r.status != "new")] if show %}
+          <form method="post" action="{{ url_for('admin_report_action', report_id=r.report_id) }}"
+                {% if action == "analyse" %}onsubmit="this.querySelector('button').textContent='Analysing...'"{% endif %}>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status_f" value="{{ status_f }}">
+            <button class="btn-mini {{ cls }}" name="action" value="{{ action }}">{{ label }}</button>
+          </form>
+          {% endfor %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="small" style="text-align:center;padding:26px">No reports here.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

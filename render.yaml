@@ -1,0 +1,58 @@
+# Render Blueprint - New > Blueprint > pick this repo, and Render creates the web service from this file.
+services:
+  - type: web
+    name: malsense
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    # 1 worker = the XGBoost model is loaded once (free plan has little memory);
+    # threads handle several visitors; long timeout because a big APK can take a while to analyse
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 180 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.1
+      - key: PUBLIC_URL
+        value: https://malsense.onrender.com
+      - key: SCAN_LIMIT_PER_DAY
+        value: "3"
+      - key: QUIZ_LIMIT_PER_DAY
+        value: "3"
+      - key: REQUIRE_LOGIN_TO_SCAN         # testing phase: true. After testing set to false so guests can scan
+        value: "true"
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: SITE_ACCESS_CODE              # private testing: visitors need this code (empty = open to all)
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "4000"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: malsense
+      - key: DB_SSL
+        value: "true"
+      - key: VT_API_KEY
+        sync: false
+      - key: QUIZ_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MAIL_PROVIDER
+        value: gmail_api
+      - key: MAIL_USERNAME
+        sync: false
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false
+      - key: FEEDBACK_TO
+        sync: false

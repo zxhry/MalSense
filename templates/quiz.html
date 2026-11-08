@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Awareness quiz - MalSense{% endblock %}
+{% block content %}
+<div class="wrap quiz">
+  <div class="quiz-top">
+    <a class="back" href="{{ back }}">&larr; Back to home</a>
+    <h1 class="quiz-title">Security awareness quiz based on <b title="{{ filename }}">{{ filename|shortname }}</b></h1>
+    {% if quiz.app %}
+    <div class="appfacts">
+      <span class="{{ quiz.app.verdict }}">Model verdict: {{ "Malware" if quiz.app.verdict == "MALWARE" else "Benign" }}</span>
+      <span>{{ quiz.app.dangerous_permissions|length }} dangerous permission{{ "" if quiz.app.dangerous_permissions|length == 1 else "s" }}</span>
+    </div>
+    {% endif %}
+    <div class="progress"><span id="plabel">Question 1 of {{ quiz.questions|length }}</span>
+      <div class="pbar"><span id="pfill"></span></div></div>
+  </div>
+
+  <div id="qbox">
+    <div class="qcat" id="qcat"></div>
+    <div class="qtext" id="qtext"></div>
+    <div id="options"></div>
+    <div id="feedback" class="feedback" hidden></div>
+    <div class="qnav"><button id="next" class="btn-next" disabled>Next question &rarr;</button></div>
+  </div>
+
+  <div id="scorebox" class="score" hidden>
+    <h2 id="smsg"></h2>
+    <div class="sbig" id="sfrac"></div>
+    <div class="spct" id="spct"></div>
+    <div class="scorebtns">
+      <button class="btn-next" type="button" onclick="start()">Retry quiz</button>
+    </div>
+  </div>
+
+  <p class="source">{{ "&#129302;"|safe if quiz.ai else "&#128218;"|safe }} {{ quiz.source }}</p>
+</div>
+
+<script id="quizdata" type="application/json">{{ quiz.questions|tojson }}</script>
+<script>
+  // All text is inserted with textContent (never innerHTML) so AI output cannot inject HTML/scripts.
+  const Q = JSON.parse(document.getElementById("quizdata").textContent);
+  let i = 0, score = 0;
+  const $ = id => document.getElementById(id);
+
+  function start() { i = 0; score = 0; $("qbox").hidden = false; $("scorebox").hidden = true; show(); }
+
+  function show() {                                   // Figure 5.7 - unanswered question
+    const q = Q[i];
+    $("plabel").textContent = `Question ${i + 1} of ${Q.length}`;
+    $("pfill").style.width = `${((i + 1) / Q.length) * 100}%`;
+    $("qcat").textContent = `QUESTION ${i + 1} - ${q.category}`;
+    $("qtext").textContent = q.question;
+    $("feedback").hidden = true;
+    $("next").disabled = true;
+    $("next").textContent = i === Q.length - 1 ? "See my score \u2192" : "Next question \u2192";
+    const box = $("options"); box.innerHTML = "";
+    q.options.forEach((text, j) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      const letter = document.createElement("span"); letter.className = "letter"; letter.textContent = "ABCD"[j];
+      const t = document.createElement("span"); t.textContent = text;
+      b.append(letter, t);
+      b.onclick = () => answer(j);
+      box.appendChild(b);
+    });
+  }
+
+  function answer(j) {                                // Figures 5.8 (correct) and 5.9 (wrong)
+    const q = Q[i], buttons = $("options").children;
+    for (const b of buttons) b.disabled = true;
+    buttons[q.answer].classList.add("right");
+    const ok = j === q.answer;
+    if (ok) score++; else buttons[j].classList.add("wrong");
+    const fb = $("feedback");
+    fb.className = "feedback " + (ok ? "ok" : "bad");
+    fb.innerHTML = "";
+    const head = document.createElement("div"); head.className = "fbhead"; head.textContent = ok ? "CORRECT!" : "Not quite.";
+    const body = document.createElement("div"); body.textContent = q.explanation;
+    fb.append(head, body); fb.hidden = false;
+    $("next").disabled = false;
+  }
+
+  $("next").onclick = () => { i++; i < Q.length ? show() : finish(); };
+
+  function finish() {                                 // Figure 5.10 - score page
+    $("qbox").hidden = true; $("scorebox").hidden = false;
+    $("plabel").textContent = "Completed"; $("pfill").style.width = "100%";
+    const pct = Math.round(score / Q.length * 100);
+    $("smsg").textContent = pct === 100 ? "Excellent!" : pct >= 60 ? "Good effort!" : "Keep learning!";
+    $("sfrac").textContent = `${score}/${Q.length}`;
+    $("spct").textContent = `${pct}%`;
+  }
+  start();
+</script>
+{% endblock %}

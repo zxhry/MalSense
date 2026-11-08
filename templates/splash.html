@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block nav %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="corner-theme">{% include "_themebtn.html" %}</div>   {# light / dark switch (no top bar on this page) #}
+<div class="splash">
+  <img class="splash-logo" src="{{ url_for('static', filename='img/MalSenseSplash.png') }}" alt="MalSense - Detect. Explain. Learn.">
+  {% if locked %}
+  {# private testing: visitors either ask to join, or enter the code they were emailed #}
+  <div class="gate">
+    <p class="gate-label">MalSense is in private testing.</p>
+    <a class="btn-white join-btn" href="{{ url_for('join') }}">Join as a tester</a>
+    <form class="gate-form" method="post" action="{{ url_for('unlock') }}" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <label class="gate-label small-label" for="gate-code">Already have an access code?</label>
+      <div class="gate-row">
+        <input id="gate-code" class="gate-input" type="password" name="code" placeholder="Access code" required>
+        <button class="btn-outline mono" type="submit">Start</button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <a class="btn-outline mono" href="{{ url_for('home') }}">Start</a>
+  {% endif %}
+</div>
+{% endblock %}

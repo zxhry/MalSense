@@ -1,0 +1,53 @@
+{% extends "admin_base.html" %}
+{% block title %}ML model - MalSense Admin{% endblock %}
+{% block admin %}
+<div class="admin-head" style="max-width:720px">
+  <h2 class="pagetitle">ML model</h2>
+  {% if info.can_retrain %}
+  <form method="post" action="{{ url_for('admin_retrain') }}"
+        onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Retraining... (about 1 minute)'; return confirm('Retrain the model now? This takes about 1 minute.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn-next">Retrain model &#8635;</button>
+  </form>
+  {% endif %}
+</div>
+<div class="card" style="max-width:720px">
+  <h4>&#9432; Model details</h4>
+  <table class="info">
+    <tr><td>Algorithm</td><td>{{ info.algorithm }}</td></tr>
+    <tr><td>Training dataset</td><td>{{ info.dataset }}</td></tr>
+    <tr><td>Total samples</td><td>{{ info.samples }}</td></tr>
+    <tr><td>Classes</td><td>{{ info.classes }}</td></tr>
+    <tr><td>Features used</td><td>{{ info.features }}</td></tr>
+    <tr><td>Train / test split</td><td>{{ info.split }}</td></tr>
+    <tr><td>Hyperparameters</td><td>{{ info.params }}</td></tr>
+    <tr><td>Last trained</td><td>{{ info.trained }}</td></tr>
+    <tr><td>Model status</td><td><span class="pill-result Benign">{{ info.status }}</span></td></tr>
+  </table>
+</div>
+{% if info.new_samples is not none %}
+{% set ns = info.new_samples %}
+<div class="card" style="max-width:720px">
+  <h4>&#10010; New samples from user reports</h4>
+  <div class="small" style="margin-bottom:12px">The original KronoDroid dataset is never changed. APKs you approve on the
+    <a href="{{ url_for('admin_reports') }}">Reports</a> page are stored separately in <span class="mono">data/new_samples.csv</span>.
+    Retraining uses KronoDroid + these samples, and tests on the same KronoDroid test set. The old model is backed up
+    first, and a new model that scores clearly worse is not used.</div>
+  <table class="info">
+    <tr><td>New samples added</td><td>{{ ns.total }} ({{ ns.malware }} malware / {{ ns.benign }} benign)</td></tr>
+    <tr><td>Used by the current model</td><td>{{ ns.in_model }}{% if ns.in_model %} &middot; {{ ns.learned }} classified correctly after training{% endif %}</td></tr>
+    <tr><td>Waiting for retraining</td><td>{% if ns.waiting %}<b style="color:var(--amber)">{{ ns.waiting }}</b> &ndash; press "Retrain model" to use them{% else %}0{% endif %}</td></tr>
+  </table>
+</div>
+{% endif %}
+{% if info.metrics %}
+<div class="card" style="max-width:720px">
+  <h4>Performance on the test set</h4>
+  <div class="stats metrics" style="margin:6px 0 0">
+    {% for k, label in [("accuracy","Accuracy"),("precision","Precision"),("recall","Recall"),("f1","F1-score"),("roc_auc","ROC-AUC")] %}
+    <div class="stat"><span>{{ label }}</span><b>{{ "%.2f"|format(info.metrics[k] * 100) }}%</b></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

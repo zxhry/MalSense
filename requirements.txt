@@ -1,0 +1,41 @@
+# MalSense - packages needed to RUN the website (Python 3.13)
+# Full old pip-freeze kept in requirements_old_utf16.txt (training/notebook packages).
+
+# --- Web app ---
+Flask==3.1.3
+Werkzeug==3.1.8
+Flask-Login==0.6.3
+Flask-WTF==1.3.0
+WTForms==3.2.2
+itsdangerous==2.2.0
+click==8.5.0
+python-dotenv==1.2.3
+gunicorn                  # production web server on Render (Linux)
+
+# --- Database (MySQL) ---
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.1.1
+PyMySQL==1.2.3
+certifi                   # CA certificates for the TLS connection to TiDB Cloud
+cryptography==50.0.1      # needed by PyMySQL for MySQL 8.4 logins (caching_sha2_password)
+
+# --- Security ---
+bcrypt==5.0.0
+dnspython                 # MX check for sign-up emails (falls back without it)
+
+# --- APK analysis + ML model ---
+androguard==4.1.4
+loguru==0.7.3
+joblib==1.6.0
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+scikit-learn==1.9.1       # must match the version the .joblib models were saved with
+threadpoolctl==3.7.0
+xgboost==3.4.1
+
+# --- Reports + external APIs ---
+requests==2.34.2
+python-docx==1.2.0
+reportlab==5.0.1
+pillow==12.3.0

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block content %}
+{# File icon used in both upload boxes #}
+{% macro fileicon() %}
+<svg width="44" height="56" viewBox="0 0 54 68" aria-hidden="true">
+  <path d="M3 3 H36 L51 18 V65 H3 Z" fill="#fff" stroke="#1b1c28" stroke-width="2"/>
+  <path d="M36 3 V18 H51" fill="none" stroke="#1b1c28" stroke-width="2"/>
+  <g stroke="#1b1c28" stroke-width="2"><line x1="12" y1="28" x2="42" y2="28"/><line x1="12" y1="36" x2="42" y2="36"/>
+  <line x1="12" y1="44" x2="42" y2="44"/><line x1="12" y1="52" x2="42" y2="52"/></g>
+</svg>
+{% endmacro %}
+
+{# Quiz icon (quiz sheet with bullet lines and a pencil) - used in the "Learn from an APK" box #}
+{% macro quizicon() %}
+<svg class="quizicon" width="62" height="66" viewBox="0 0 56 60" aria-hidden="true">
+  {# sheet (the right edge has a gap where the pencil crosses it) #}
+  <path d="M42 26 V7 a4 4 0 0 0 -4 -4 H8 a4 4 0 0 0 -4 4 V53 a4 4 0 0 0 4 4 H38 a4 4 0 0 0 4 -4 V45" fill="none" stroke="#1b1c28" stroke-width="2.4" stroke-linecap="round"/>
+  <text class="qfill" x="23" y="15.5" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="9.5" font-weight="800" letter-spacing=".4">QUIZ</text>
+  {# bullet lines #}
+  <circle class="qfill" cx="11" cy="23" r="1.7"/><line x1="16" y1="23" x2="34" y2="23" stroke="#1b1c28" stroke-width="2.4" stroke-linecap="round"/>
+  <circle class="qfill" cx="11" cy="31" r="1.7"/><line x1="16" y1="31" x2="34" y2="31" stroke="#1b1c28" stroke-width="2.4" stroke-linecap="round"/>
+  <circle class="qfill" cx="11" cy="39" r="1.7"/><line x1="16" y1="39" x2="31" y2="39" stroke="#1b1c28" stroke-width="2.4" stroke-linecap="round"/>
+  <circle class="qfill" cx="11" cy="47" r="1.7"/><line x1="16" y1="47" x2="25" y2="47" stroke="#1b1c28" stroke-width="2.4" stroke-linecap="round"/>
+  {# pencil #}
+  <path d="M46.1 23 L51.9 27 L35.9 50.2 L29 54 L30.1 46.3 Z" fill="none" stroke="#1b1c28" stroke-width="2.2" stroke-linejoin="round"/>
+  <line x1="49.6" y1="30.3" x2="43.9" y2="26.3" stroke="#1b1c28" stroke-width="2.2"/>
+</svg>
+{% endmacro %}
+
+{# One upload box. Fig 5.2 -> 5.3: after a file is chosen, show its name with (x) and change the button text #}
+{% macro uploader(id, action, label, busy, icon="file", left=None, limit=None, what="") %}
+<form id="{{ id }}" action="{{ action }}" method="post" enctype="multipart/form-data" class="filebox uploader"
+      data-busy="{{ busy }}">
+  {% if icon == "quiz" %}{{ quizicon() }}{% else %}{{ fileicon() }}{% endif %}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="file" name="apk" accept=".apk" hidden>
+  <div class="chosen"><span class="fname"></span></div>
+  <button type="button" class="btn-white mainbtn" data-label="{{ label }}">{{ label }}</button>
+  <div class="dropnote">or drag &amp; drop an .apk file here &middot; max 100 MB</div>
+  {% if left is not none %}<div class="dropnote quota{{ ' none' if left == 0 }}">{{ left }} of {{ limit }} {{ what }} left today</div>{% endif %}
+</form>
+{% endmacro %}
+
+{# Guests see this instead of an upload box: scans and quizzes need an account (daily limit per tester) #}
+{% macro loginbox(label, anchor, icon="file") %}
+<a class="filebox loginbox" href="{{ url_for('login', next=url_for('home', _anchor=anchor)) }}">
+  {% if icon == "quiz" %}{{ quizicon() }}{% else %}{{ fileicon() }}{% endif %}
+  <span class="btn-white mainbtn">{{ label }}</span>
+  <div class="dropnote">No account yet? <span class="u">Register</span> first - it only takes a minute.</div>
+</a>
+{% endmacro %}
+
+<div class="home">
+  <span class="chip"><i></i>AI engine online &middot; XGBoost + VirusTotal</span>
+  <h1 class="hero-title">Mal<span>Sense</span></h1>
+  <p class="lead">An explainable AI-powered Android malware scanner and learning platform. </p>
+
+  <div class="homegrid">
+    {# Section 1: analyse an APK (result page) #}
+    <section class="homecard" id="scan">
+      <h2 class="hc-title">Analyse an APK</h2>
+      <p class="hc-text">Find out whether an app is <b>benign or malware</b>. Our AI model checks the file,
+        VirusTotal's antivirus engines double-check it, and you see the reasons behind the verdict.</p>
+      {% if current_user.is_authenticated or not REQUIRE_LOGIN_TO_SCAN %}
+        {{ uploader("upload", url_for('scan'), "Analyse file", "Analysing...", left=left.scans if left else None,
+                    limit=limits.scans if limits else None, what="scans") }}
+      {% else %}{{ loginbox("Log in to analyse", "scan") }}{% endif %}
+    </section>
+
+    {# Section 2: learn from an APK (AI awareness quiz) #}
+    <section class="homecard learn" id="learn">
+      <h2 class="hc-title">Learn from an APK</h2>
+      <p class="hc-text">Test your <b>cybersecurity awareness</b>. MalSense reads the app's permissions and
+        behaviour, and AI writes quiz questions about the risks found in it.</p>
+      {% if current_user.is_authenticated %}
+        {{ uploader("learnform", url_for('learn'), "Start quiz", "Preparing quiz...", "quiz", left=left.quizzes if left else None,
+                    limit=limits.quizzes if limits else None, what="quizzes") }}
+      {% else %}{{ loginbox("Log in to start a quiz", "learn", "quiz") }}{% endif %}
+    </section>
+  </div>
+
+  {# Mobile Security Checklist (full width) #}
+  <a class="homeband checklist" href="{{ url_for('checklist') }}">
+    <div><b>Mobile Security Checklist</b>
+      <span>16 simple habits to protect your phone &ndash; tick them off as you go and see how secure you are.</span></div>
+    <span class="btn-dark">Open checklist &rarr;</span>
+  </a>
+
+  {# Digital Amanah + Report, side by side #}
+  <div class="homebands">
+    <a class="homeband amanah" href="{{ url_for('amanah') }}">
+      <div><b>Digital Amanah</b>
+        <span>Your phone and data are a trust. Islamic reminders, Maqasid Syariah and practical tips.</span></div>
+      <span class="btn-dark">Explore &rarr;</span>
+    </a>
+    {% set report_url = url_for('report_apk') if current_user.is_authenticated else url_for('login', next=url_for('report_apk')) %}
+    <a class="homeband report" href="{{ report_url }}">
+      <div><b>Couldn't analyse your app, or the result looks wrong?</b>
+        <span>Send the APK to the admin so MalSense can learn from it.</span></div>
+      <span class="btn-dark">{{ "Report an APK" if current_user.is_authenticated else "Log in to report" }} &rarr;</span>
+    </a>
+  </div>
+
+  {% if not current_user.is_authenticated %}<p class="note"><a href="{{ url_for('login') }}">Log in</a> or <a href="{{ url_for('register') }}">register</a> to analyse APKs, take quizzes, save your scan history and download reports.</p>{% endif %}
+
+  {% if metrics %}
+  {# real numbers from models/scanner_metrics.json (tested on 20% of KronoDroid the model never saw) #}
+  <div class="statstrip">
+    <div><b>{{ "%.1f"|format(metrics.accuracy * 100) }}%</b><span>Detection accuracy</span></div>
+    <div><b>{{ "%.3f"|format(metrics.roc_auc) }}</b><span>ROC-AUC score</span></div>
+    <div><b>{{ "{:,}".format(metrics.n_total) }}</b><span>Apps in dataset</span></div>
+    <div><b>{{ metrics.n_features }}</b><span>Features checked</span></div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // Choosing (or dropping) an APK starts straight away - no second click needed
+  // coming back with the browser's Back button: reset the buttons
+  window.addEventListener("pageshow", () => document.querySelectorAll(".uploader").forEach(box => {
+    const btn = box.querySelector(".mainbtn");
+    btn.disabled = false; btn.textContent = btn.dataset.label || btn.textContent;
+    box.querySelector("input[type=file]").value = ""; box.querySelector(".chosen").style.display = "none";
+  }));
+  document.querySelectorAll(".uploader").forEach(box => {
+    const input = box.querySelector("input[type=file]"), btn = box.querySelector(".mainbtn");
+    const chosen = box.querySelector(".chosen"), fname = box.querySelector(".fname");
+    btn.addEventListener("click", () => { if (!btn.disabled) input.click(); });
+    input.addEventListener("change", () => {
+      if (!input.files.length) return;
+      if (!input.files[0].name.toLowerCase().endsWith(".apk")) { alert("Please choose an .apk file."); input.value = ""; return; }
+      fname.textContent = input.files[0].name; chosen.style.display = "block";
+      btn.disabled = true; btn.textContent = box.dataset.busy;
+      document.querySelectorAll(".uploader .mainbtn").forEach(b => b.disabled = true);   // one upload at a time
+      if (window.showLoader) showLoader();            // breathing-logo loading screen
+      box.submit();
+    });
+    // drag & drop an APK onto the box
+    ["dragenter", "dragover"].forEach(ev => box.addEventListener(ev, e => { e.preventDefault(); box.classList.add("drag"); }));
+    ["dragleave", "drop"].forEach(ev => box.addEventListener(ev, e => { e.preventDefault(); box.classList.remove("drag"); }));
+    box.addEventListener("drop", e => {
+      const f = e.dataTransfer.files[0];
+      if (!f || btn.disabled) return;
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event("change"));
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "admin_base.html" %}
+{% block title %}User management - MalSense Admin{% endblock %}
+{% block admin %}
+<div class="admin-head">
+  <h2 class="pagetitle">User management</h2>
+  <form method="get"><input class="search" name="q" value="{{ q }}" placeholder="Search user..."></form>
+</div>
+<div class="stats">
+  <div class="stat"><span>Total users</span><b>{{ total_users }}</b></div>
+  <div class="stat"><span>Total scans</span><b>{{ total_scans }}</b></div>
+</div>
+<div class="card tablecard">
+  <table class="logs">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Scans</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email }}</td>
+        <td>{% if u.role == "admin" %}<span class="role-admin">Admin</span>{% else %}User{% endif %}</td>
+        <td>{% if u.is_active %}<span class="pill-result Benign">Active</span>{% else %}<span class="pill-result Malware">Inactive</span>{% endif %}</td>
+        <td>{{ counts.get(u.user_id, 0) if u.role != "admin" else counts.get(u.user_id, "-") }}</td>
+        <td>{{ u.created_at.strftime("%d %B %Y") }}</td>
+        <td><a class="btn-mini" href="{{ url_for('admin_user_edit', user_id=u.user_id) }}">Edit</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="empty">No users found{% if q %} for "{{ q }}"{% endif %}.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

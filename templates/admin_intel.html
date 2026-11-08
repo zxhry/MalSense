@@ -1,0 +1,88 @@
+{% extends "admin_base.html" %}
+{% block title %}Threat intelligence - MalSense Admin{% endblock %}
+{% block admin %}
+<div class="admin-head">
+  <h2 class="pagetitle">Threat intelligence</h2>
+  <div class="exportbtns">
+    <a class="btn-dark" href="{{ url_for('admin_intel_export', fmt='csv') }}" title="Spreadsheet of all malware indicators">&#10515; IOCs (CSV)</a>
+    <a class="btn-dark" href="{{ url_for('admin_intel_export', fmt='json') }}" title="STIX 2.1 bundle - imports into MISP, OpenCTI and other TI platforms">&#10515; IOCs (STIX 2.1)</a>
+  </div>
+</div>
+<p class="small" style="max-width:860px">Malware seen by MalSense: scans where the AI model or {{ VT_CONFIRM }}+ VirusTotal engines
+  say malware, plus reported APKs you confirmed. Families come from VirusTotal; techniques come from mapping each app's
+  permissions to <a href="https://attack.mitre.org/matrices/mobile/" target="_blank" rel="noopener">MITRE ATT&amp;CK for Mobile</a>.</p>
+
+{% set tmax = (weeks | map(attribute="total") | max) or 1 %}
+<div class="stats">
+  <div class="stat"><span>Malware samples (unique)</span><b>{{ iocs|length }}</b></div>
+  <div class="stat"><span>Families identified</span><b>{{ families|length }}</b></div>
+  <div class="stat"><span>Malware this week</span><b>{{ weeks[-1].malware }}</b></div>
+  <div class="stat"><span>Top technique</span><b class="stat-sm">{{ techniques[0][0] if techniques else "-" }}</b></div>
+</div>
+
+<div class="intelgrid">
+  <div class="card">
+    <h4>Detections per week (last 8 weeks)</h4>
+    <div class="weekchart" role="img" aria-label="Scans and malware detections per week">
+      {% for w in weeks %}
+      <div class="wk" title="Week of {{ w.start.strftime('%d %b') }}: {{ w.malware }} malware of {{ w.total }} scans">
+        <div class="wkbars">
+          <span class="wtotal" style="height:{{ (w.total / tmax * 100)|round|int }}%"></span>
+          <span class="wmal" style="height:{{ (w.malware / tmax * 100)|round|int }}%"></span>
+        </div>
+        <div class="wkval">{{ w.malware }}/{{ w.total }}</div>
+        <div class="wklab">{{ w.start.strftime('%d %b') }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="legend"><span><i class="key wmal"></i> Malware</span><span><i class="key wtotal"></i> All scans</span></div>
+  </div>
+
+  {% macro ranking(rows, empty) %}
+    {% set top = (rows[0][-1] if rows else 1) %}
+    {% for row in rows %}
+    <div class="rank" title="{{ row[-1] }} sample{{ 's' if row[-1] != 1 }}">
+      <div class="rank-label">{{ caller(row) }}</div>
+      <div class="rank-bar"><span style="width:{{ (row[-1] / top * 100)|round|int }}%"></span></div>
+      <div class="rank-n">{{ row[-1] }}</div>
+    </div>
+    {% else %}<div class="small">{{ empty }}</div>{% endfor %}
+  {% endmacro %}
+
+  <div class="card">
+    <h4>Malware families</h4>
+    {% call(row) ranking(families, "No family labels yet - VirusTotal only names families for files it knows.") %}<b>{{ row[0]|title }}</b>{% endcall %}
+  </div>
+
+  <div class="card">
+    <h4>MITRE ATT&amp;CK techniques enabled</h4>
+    {% call(row) ranking(techniques, "No malware samples yet.") %}<a href="{{ row[2] }}" target="_blank" rel="noopener" class="mono">{{ row[0] }}</a> {{ row[1] }}{% endcall %}
+  </div>
+
+  <div class="card">
+    <h4>Dangerous permissions in malware</h4>
+    {% call(row) ranking(perms, "No malware samples yet.") %}<span class="mono">{{ row[0] }}</span>{% endcall %}
+  </div>
+</div>
+
+<div class="card tablecard">
+  <h4 style="margin:16px 0 6px">Latest indicators of compromise</h4>
+  <table class="logs">
+    <thead><tr><th>SHA-256</th><th>App / package</th><th>Family</th><th>Evidence</th><th>ATT&amp;CK</th><th>Last seen</th></tr></thead>
+    <tbody>
+    {% for r in recent %}
+      <tr>
+        <td class="mono small" title="{{ r.sha256 }}">{{ r.sha256[:16] }}&hellip;</td>
+        <td>{{ r.app_name or "-" }}<div class="small">{{ r.package }}</div></td>
+        <td>{{ r.family|title if r.family else "-" }}{% if r.category %}<div class="small">{{ r.category }}</div>{% endif %}</td>
+        <td class="small">{{ r.evidence }}</td>
+        <td class="small mono">{{ r.attack or "-" }}</td>
+        <td>{{ r.last_seen.strftime("%d %b %Y") }}<div class="small">seen {{ r.times_seen }}&times;</div></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="empty">No malware indicators yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

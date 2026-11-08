@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Digital Amanah - MalSense{% endblock %}
+{% block content %}
+{% set f = reminder %}
+<div class="wrap amanah">
+  <a class="back" href="{{ url_for('home') }}">&larr; Back to home</a>
+
+  <header class="am-head">
+    <span class="am-chip">Naqli &amp; Aqli &middot; Islam and cybersecurity</span>
+    <h1 class="am-title">Digital <span>Amanah</span></h1>
+    <p class="am-intro">{{ intro }}</p>
+    <nav class="am-nav" aria-label="On this page">
+      <a href="#reminders">Islamic reminder</a>
+      <a href="#maqasid">Maqasid Syariah</a>
+      <a href="#advice">Digital-safety advice</a>
+    </nav>
+  </header>
+
+  {# 1. Islamic reminder of the day (7 reminders, one for each day of the week) #}
+  <section id="reminders" class="am-section">
+    <figure class="am-featured">
+      <div class="am-kind">Reminder of the day &middot; {{ day_name }} &middot; {{ f.kind }}</div>
+      <blockquote>&ldquo;{{ f.text }}&rdquo;</blockquote>
+      <figcaption>{{ f.ref }}</figcaption>
+      <p class="am-lesson"><b>In the digital world:</b> {{ f.lesson }}</p>
+    </figure>
+  </section>
+
+  {# 2. Maqasid Syariah #}
+  <section id="maqasid" class="am-section">
+    <h2 class="am-h2">Maqasid Syariah in the digital world</h2>
+    <p class="am-sub">The objectives of Syariah protect five essentials of human life (al-daruriyyat al-khamsah).
+      Malware and scams attack every one of them &ndash; here is how, and what you can do.</p>
+    <div class="am-maqasid">
+      {% for m in maqasid %}
+      <article class="am-maq">
+        <div class="am-maq-head"><span class="am-num">{{ loop.index }}</span>
+          <div><h3>{{ m.name }}</h3><div class="am-meaning">{{ m.meaning }}</div></div></div>
+        <p><b>The risk:</b> {{ m.digital }}</p>
+        <p class="am-do"><b>What you can do:</b> {{ m.do }}</p>
+        {% if m.perms %}<div class="am-perms"><span>Permissions to watch:</span>
+          {% for p in m.perms %}<code>{{ p }}</code>{% endfor %}</div>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# 3. Practical digital-safety advice #}
+  <section id="advice" class="am-section">
+    <h2 class="am-h2">Practical digital-safety advice</h2>
+    <p class="am-sub">Small habits that protect the amanah of your phone, your data and your family.</p>
+    <ol class="am-advice">
+      {% for title, text in advice %}
+      <li><b>{{ title }}</b><span>{{ text }}</span></li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <p class="am-note">Quran verses: Sahih International English translation. Hadith references follow the standard
+    collections (Arba'in al-Nawawi numbering). This page is educational content for awareness.</p>
+</div>
+{% endblock %}

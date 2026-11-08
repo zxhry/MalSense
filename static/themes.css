@@ -1,0 +1,599 @@
+/* =====================================================================
+   MalSense themes - loaded AFTER style.css + cyber.css.
+   1. Readable fonts for BOTH themes (Inter + JetBrains Mono, bigger labels).
+   2. Light theme: html[data-theme="light"]. The dark theme is the original neon design.
+   The sun/moon button in the top bar switches theme (saved in the browser).
+   ===================================================================== */
+
+/* ---------- 1. fonts (stored in static/fonts, SIL Open Font Licence - works offline) ---------- */
+@font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url("fonts/inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url("fonts/inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url("fonts/inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-display: swap; src: url("fonts/inter-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 800; font-display: swap; src: url("fonts/inter-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-display: swap; src: url("fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 500; font-display: swap; src: url("fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2"); }
+
+:root {
+  --display: "Inter", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+body { font-size: 15.5px; font-weight: 400; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+b, strong { font-weight: 600; }
+.small { font-size: 14px; }
+.ms-loader .ms-loader-text { font-family: var(--body) !important; letter-spacing: .2em !important; font-size: 14px !important; }
+
+/* uppercase labels stay uppercase (part of the design) but are bigger, bolder and less spread out */
+.navlink, .navuser, .pill            { font-size: 13.5px; font-weight: 600; letter-spacing: .06em; }
+.card h4, .side-title                { font-size: 14px; font-weight: 700; letter-spacing: .07em; }
+.back                                { font-size: 14px; font-weight: 600; letter-spacing: .04em; }
+.btn-white, .btn-solid, .btn-next    { font-size: 14px; font-weight: 700; letter-spacing: .06em; }
+.btn-dark, .btn-outline, .btn-mini   { font-size: 13.5px; font-weight: 600; letter-spacing: .05em; }
+.btn-danger                          { font-size: 13.5px; font-weight: 600; letter-spacing: .05em; }
+.chip                                { font-size: 13px; font-weight: 600; letter-spacing: .06em; }
+.badge                               { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+.pill-result, .lvl                   { font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
+.status                              { font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+.adminbadge                          { font-size: 12px; font-weight: 700; letter-spacing: .05em; }
+.verdict-pill                        { font-size: 13.5px; font-weight: 700; letter-spacing: .05em; }
+.stat span, .fact span               { font-size: 12.5px; font-weight: 600; letter-spacing: .05em; }
+.stat b, .fact b                     { font-weight: 800; letter-spacing: 0; }
+.logs th                             { font-size: 12.5px; font-weight: 700; letter-spacing: .05em; }
+.logs                                { font-size: 15px; }
+.statstrip b                         { font-size: 21px; font-weight: 800; }
+.statstrip span                      { font-size: 12px; font-weight: 600; letter-spacing: .05em; }
+.auth label, .filters label, .reportform label { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; }
+.auth label a, .auth label.check     { font-size: 14px; letter-spacing: 0; }
+.rtabs a                             { font-size: 13px; font-weight: 600; letter-spacing: .04em; }
+.tabs a, .am-nav a                   { font-size: 13px; font-weight: 600; letter-spacing: .05em; }
+.steptitle                           { font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+.xai-group, .qcat, .glossary dt      { font-size: 13.5px; font-weight: 700; letter-spacing: .05em; }
+.sidebar a                           { font-size: 14px; font-weight: 600; letter-spacing: .04em; }
+.attack .tactic                      { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; }
+.am-chip, .am-kind, .am-tag          { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; }
+.am-cta b, .homeband b               { font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+.homeband.checklist b                { font-size: 16px; letter-spacing: .04em; }
+.homeband span, .hc-text             { font-size: 15.5px; }
+.msc-pill                            { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+.hero-title, .am-title, .msc-title   { font-weight: 800; letter-spacing: .01em; }
+.pagetitle                           { font-weight: 800; letter-spacing: .02em; }
+.headline                            { font-weight: 700; }
+.quiz-title                          { font-weight: 700; }
+.qtext                               { font-size: 20px; }
+.opt                                 { font-size: 16px; }
+.stepnum                             { font-weight: 700; }
+.mono, .hash, .tag, code             { font-family: var(--mono); }
+
+/* ---------- theme switch button (top bar) ---------- */
+.themebtn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: none;
+            background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 50%; cursor: pointer;
+            transition: border-color .2s, color .2s, background .2s; }
+.themebtn:hover { border-color: var(--cyan); color: var(--cyan); }
+.themebtn .sun { display: none; }
+html[data-theme="light"] .themebtn .sun { display: block; }
+html[data-theme="light"] .themebtn .moon { display: none; }
+
+/* =====================================================================
+   2. LIGHT THEME - same layout and neon accents, on a light background
+   ===================================================================== */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f6fb;
+  --panel: #ffffff;
+  --panel-solid: #ffffff;
+  --panel-border: #d6dce8;
+  --line: #e2e7f0;
+  --text: #0f172a;
+  --muted: #475569;
+  --pink: #c026d3;           /* deeper magenta: readable on white */
+  --cyan: #0e7490;           /* deeper teal */
+  --lime: #15803d;
+  --blue: var(--cyan);
+  --btn-light: var(--pink);
+  --red: #dc2626;   --red-bg: rgba(220, 38, 38, .09);   --red-text: #b91c1c;
+  --green: #16a34a; --green-bg: rgba(22, 163, 74, .10); --green-text: #15803d;
+  --amber: #d97706; --amber-bg: rgba(217, 119, 6, .11); --amber-text: #b45309;
+  --am: #059669; --am-gold: #a16207;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(192, 38, 211, .08), transparent 70%),
+    linear-gradient(rgba(14, 116, 144, .05) 1px, transparent 1px) 0 0 / 46px 46px,
+    linear-gradient(90deg, rgba(14, 116, 144, .05) 1px, transparent 1px) 0 0 / 46px 46px,
+    var(--bg);
+  background-attachment: fixed;
+}
+html[data-theme="light"] #cyber-bg { display: none; }
+html[data-theme="light"] ::selection { background: var(--pink); color: #fff; }
+
+/* top bar + navigation */
+html[data-theme="light"] nav.top { background: rgba(255, 255, 255, .92); border-bottom-color: var(--panel-border); }
+html[data-theme="light"] .navlink { color: #334155; }
+html[data-theme="light"] .navlink:hover { color: var(--pink); text-shadow: none; }
+html[data-theme="light"] .iconbtn { color: #334155; }
+html[data-theme="light"] .pill { color: var(--text); }
+html[data-theme="light"] .pill:hover { box-shadow: none; }
+html[data-theme="light"] .pill.solid { color: #fff; }
+
+/* cards: white with a soft shadow instead of glass */
+html[data-theme="light"] .card, html[data-theme="light"] .stat, html[data-theme="light"] .auth form,
+html[data-theme="light"] .homecard, html[data-theme="light"] .msc-sec, html[data-theme="light"] .am-card,
+html[data-theme="light"] .am-maq, html[data-theme="light"] .am-advice li, html[data-theme="light"] .am-featured {
+  backdrop-filter: none; box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06); }
+html[data-theme="light"] .card:hover { box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 8px 24px rgba(14, 116, 144, .10); }
+html[data-theme="light"] .sidebar { background: #ffffff; border-right: 1px solid var(--panel-border); box-shadow: none; }
+html[data-theme="light"] .quizcard { background: rgba(192, 38, 211, .04); }
+html[data-theme="light"] .pagetitle { text-shadow: none; }
+html[data-theme="light"] .homecard { border-color: rgba(14, 116, 144, .35); }
+html[data-theme="light"] .homecard.learn { border-color: rgba(192, 38, 211, .35); }
+
+/* buttons: same angled shapes, solid colour with white text */
+html[data-theme="light"] .btn-white, html[data-theme="light"] .btn-solid, html[data-theme="light"] .btn-next {
+  color: #fff; box-shadow: 0 4px 14px rgba(192, 38, 211, .25); }
+html[data-theme="light"] .btn-white:disabled { background: #94a3b8; box-shadow: none; }
+html[data-theme="light"] .btn-dark, html[data-theme="light"] .btn-outline, html[data-theme="light"] .btn-mini {
+  color: var(--text); border-color: #64748b; }
+html[data-theme="light"] .btn-dark:hover, html[data-theme="light"] .btn-outline:hover, html[data-theme="light"] .btn-mini:hover {
+  color: var(--cyan); border-color: var(--cyan); background: rgba(14, 116, 144, .06); }
+html[data-theme="light"] .btn-outline { box-shadow: none; }
+html[data-theme="light"] .btn-danger:hover { background: var(--red-bg); }
+
+/* chips, badges, glow removed (glow is unreadable on white) */
+html[data-theme="light"] .chip { color: var(--lime); border-color: rgba(21, 128, 61, .4); background: rgba(21, 128, 61, .07); }
+html[data-theme="light"] .chip i { background: var(--lime); box-shadow: none; }
+html[data-theme="light"] .badge, html[data-theme="light"] .badge.HIGH, html[data-theme="light"] .badge.LOW { box-shadow: none; }
+html[data-theme="light"] .verdict-pill, html[data-theme="light"] .stat b, html[data-theme="light"] .sbig,
+html[data-theme="light"] .am-title span, html[data-theme="light"] .msc-title span { text-shadow: none; }
+html[data-theme="light"] .hero-title { text-shadow: 2px 0 0 rgba(192, 38, 211, .25), -2px 0 0 rgba(14, 116, 144, .25); }
+html[data-theme="light"] .hero-title span { background: linear-gradient(90deg, #c026d3, #7c3aed 55%, #0e7490);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+html[data-theme="light"] .statstrip { background: #ffffff; border-color: var(--panel-border); }
+html[data-theme="light"] .statstrip b { background: linear-gradient(180deg, #a21caf, #c026d3); -webkit-background-clip: text; background-clip: text; color: transparent; }
+html[data-theme="light"] .adminbadge { color: var(--amber-text); border-color: var(--amber); }
+html[data-theme="light"] .navcount { color: #fff; }
+html[data-theme="light"] .tag { border-color: rgba(220, 38, 38, .35); }
+
+/* bars: grey tracks (white-on-white tracks were invisible) */
+html[data-theme="light"] .bar, html[data-theme="light"] .minibar, html[data-theme="light"] .xai-bar, html[data-theme="light"] .pbar,
+html[data-theme="light"] .rank-bar, html[data-theme="light"] .msc-bar { background: #e2e8f0; }
+html[data-theme="light"] .bar span, html[data-theme="light"] .minibar span, html[data-theme="light"] .xai-bar span,
+html[data-theme="light"] .pbar span, html[data-theme="light"] .msc-bar span { box-shadow: none; }
+html[data-theme="light"] .dot { background: #cbd5e1; }
+html[data-theme="light"] .dot.flag { background: var(--red); box-shadow: none; }
+
+/* home: upload boxes + link boxes */
+html[data-theme="light"] .filebox { background: #f8fafc; border-color: rgba(14, 116, 144, .5); }
+html[data-theme="light"] .filebox:hover, html[data-theme="light"] .filebox.drag { background: rgba(192, 38, 211, .04); box-shadow: none; }
+html[data-theme="light"] .homecard.learn .filebox { border-color: rgba(192, 38, 211, .5); }
+html[data-theme="light"] .home p.lead { color: var(--muted); }
+html[data-theme="light"] .homeband.checklist { --c: 14, 116, 144; }
+html[data-theme="light"] .homeband.amanah    { --c: 5, 150, 105; }
+html[data-theme="light"] .homeband.report    { --c: 180, 83, 9; }
+html[data-theme="light"] .homeband { background: #ffffff; }
+html[data-theme="light"] .homeband .btn-dark { color: var(--text); }
+html[data-theme="light"] .homeband:hover { box-shadow: 0 6px 18px rgba(var(--c), .15); }
+html[data-theme="light"] .homeband:hover .btn-dark { color: rgb(var(--c)); }
+html[data-theme="light"] .splash-logo, html[data-theme="light"] .home-logo { filter: none; }
+
+/* forms */
+html[data-theme="light"] .auth input[type=text], html[data-theme="light"] .auth input[type=email],
+html[data-theme="light"] .auth input[type=password], html[data-theme="light"] .search, html[data-theme="light"] .filters select,
+html[data-theme="light"] .reportform select, html[data-theme="light"] .reportform textarea, html[data-theme="light"] .reportform input[type=email] {
+  background: #ffffff; color: var(--text); border-color: #94a3b8; }
+html[data-theme="light"] .auth input:focus, html[data-theme="light"] .search:focus, html[data-theme="light"] .filters select:focus,
+html[data-theme="light"] .reportform select:focus, html[data-theme="light"] .reportform textarea:focus, html[data-theme="light"] .reportform input:focus {
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, .18); }
+html[data-theme="light"] .auth .avatar { box-shadow: none; }
+html[data-theme="light"] .auth .avatar svg { stroke: var(--cyan); }
+html[data-theme="light"] .auth .avatar svg circle[fill] { fill: var(--cyan); }   /* only shapes meant to be filled (the padlock keyhole) - the sign-up head stays an outline */
+html[data-theme="light"] .eye { color: #64748b; }
+html[data-theme="light"] .field-msg.error { color: var(--red-text); }
+
+/* messages */
+html[data-theme="light"] .flash { background: #fff1f2; color: #9f1239; border-color: rgba(220, 38, 38, .35); }
+html[data-theme="light"] .flash.success { background: #f0fdf4; color: #166534; border-color: rgba(22, 163, 74, .35); }
+html[data-theme="light"] .toasts .flash { box-shadow: 0 8px 24px rgba(15, 23, 42, .12); }
+
+/* tables */
+html[data-theme="light"] .logs th { border-bottom-color: rgba(14, 116, 144, .35); }
+html[data-theme="light"] .logs tbody tr:hover { background: rgba(14, 116, 144, .04); }
+html[data-theme="light"] .pager-arrow { color: var(--text); border-color: #94a3b8; }
+
+/* results page */
+html[data-theme="light"] .todo { background: #f1f5f9; }
+html[data-theme="light"] .todo b, html[data-theme="light"] .conflict b { color: var(--text); }
+html[data-theme="light"] .conflict { color: #78350f; background: rgba(217, 119, 6, .08); }
+html[data-theme="light"] .conflict.HIGH { color: #7f1d1d; background: rgba(220, 38, 38, .07); }
+html[data-theme="light"] .fact { background: #f8fafc; }
+html[data-theme="light"] .fact:hover { background: rgba(14, 116, 144, .06); }
+html[data-theme="light"] .rtabs { background: rgba(255, 255, 255, .95); }
+html[data-theme="light"] .rtabs a:hover { color: var(--text); background: #f1f5f9; }
+html[data-theme="light"] .rtabs a.on { color: var(--text); background: rgba(192, 38, 211, .08); }
+html[data-theme="light"] .rtabs .tcount { color: var(--text); }
+html[data-theme="light"] .stepnum { color: var(--cyan); box-shadow: none; background: #fff; }
+html[data-theme="light"] .rules tr.applied td { color: var(--text); background: rgba(192, 38, 211, .08); }
+html[data-theme="light"] .xai-note { background: #f1f5f9; }
+html[data-theme="light"] .attack .tid:hover { background: rgba(14, 116, 144, .08); }
+html[data-theme="light"] .wtotal { background: rgba(14, 116, 144, .25); }
+
+/* quiz */
+html[data-theme="light"] .opt { color: var(--text); background: #ffffff; }
+html[data-theme="light"] .opt:hover:not(:disabled) { background: rgba(14, 116, 144, .05); }
+html[data-theme="light"] .opt.right { background: #f0fdf4; } html[data-theme="light"] .opt.right .letter { color: #fff; }
+html[data-theme="light"] .opt.wrong { background: #fff1f2; } html[data-theme="light"] .opt.wrong .letter { color: #fff; }
+html[data-theme="light"] .feedback.ok { background: #f0fdf4; } html[data-theme="light"] .feedback.bad { background: #fff1f2; }
+html[data-theme="light"] .feedback.ok .fbhead { color: #15803d; } html[data-theme="light"] .feedback.bad .fbhead { color: #b91c1c; }
+
+/* admin */
+html[data-theme="light"] .sidebar a { color: #334155; }
+html[data-theme="light"] .sidebar a:hover { color: var(--text); background: #f1f5f9; }
+html[data-theme="light"] .sidebar a.on { color: var(--text); background: rgba(192, 38, 211, .08); }
+html[data-theme="light"] .tabs a.on { color: var(--text); background: rgba(192, 38, 211, .08); }
+
+/* Mobile Security Checklist + Digital Amanah */
+html[data-theme="light"] .msc-pill { color: #ffffff; background: var(--cyan); }
+html[data-theme="light"] .msc-item input:checked + .msc-check { color: #fff; }
+html[data-theme="light"] .am-cta { border-color: rgba(5, 150, 105, .5); }
+
+/* loading screen */
+html[data-theme="light"] .ms-loader { background: radial-gradient(ellipse at center, rgba(255, 255, 255, .7), rgba(244, 246, 251, .97) 70%) !important; }
+
+@media print { html, html[data-theme="light"] { background: #fff; } }
+
+/* light theme logos: the white "Mal" lettering becomes dark navy (files made from the originals) */
+html[data-theme="light"] .brand img, html[data-theme="light"] .home-logo, html[data-theme="light"] .ms-loader img { content: url("img/MalSenseLogo_light.png"); }
+html[data-theme="light"] .splash-logo { content: url("img/MalSenseSplash_light.png"); }
+.statstrip { max-width: 780px; }
+html[data-theme="light"] .back { color: var(--muted); }
+html[data-theme="light"] .back:hover { color: var(--text); }
+html[data-theme="light"] .chosen { color: var(--cyan); }
+
+/* quiz icon on the home page: the "QUIZ" letters and bullet dots follow the box colour */
+.filebox svg .qfill { fill: var(--cyan); }
+.homecard.learn .filebox svg .qfill { fill: var(--pink); }
+
+/* =====================================================================
+   BIG, EASY-TO-READ TYPOGRAPHY (sizes taken from the "Night sky" try-out).
+   Only font, size, weight, case and spacing change here - the neon colours,
+   glow, angled buttons and backgrounds above stay exactly the same.
+   ===================================================================== */
+body { font-size: 16px; line-height: 1.6; }
+.small { font-size: 14.5px; line-height: 1.6; }
+.note { font-size: 15px; }
+
+/* menus, buttons and headings: normal sentence case (no spaced capitals) */
+.navlink, .navuser, .pill, h2, .pagetitle, .auth h2, .score h2, .back, .quizcard b,
+.btn-white, .btn-solid, .btn-next, .btn-dark, .btn-outline, .btn-mini, .btn-danger, .badge, .pill-result,
+.lvl, .adminbadge, .verdict-pill, .hero-title, .auth label, .filters label, .reportform label, .stat b,
+.headline, .steptitle, .xai-group, .glossary dt, .qcat, .sbig, .sidebar a, .quiz-title, .tabs a, .status,
+.attack .tactic, .fact b, .rtabs a, .am-title, .am-nav a, .am-tag, .am-cta b, .msc-title, .msc-pill, .homeband b {
+  text-transform: none; letter-spacing: normal;
+}
+/* small labels stay as spaced monospace capitals (e.g. "● AI ENGINE ONLINE", card titles) */
+.chip, .card h4, .side-title, .stat span, .fact span, .statstrip span, .logs th, .am-chip, .am-kind {
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: .16em; font-weight: 500;
+}
+
+/* top bar */
+.navlink { font-size: 16px; font-weight: 500; }
+.navuser { font-size: 16px; font-weight: 600; }
+.pill { font-size: 15.5px; font-weight: 600; padding: 9px 20px; }
+.themebtn { width: 40px; height: 40px; }
+
+/* headings */
+.pagetitle { font-size: 34px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 22px; }
+h2, .auth h2, .score h2 { font-weight: 800; letter-spacing: -.02em; }
+.auth h2 { font-size: 30px; }
+.card h4, .side-title { font-size: 16px; font-weight: 600; letter-spacing: .12em; margin-bottom: 16px; }   /* card titles: bigger so users can read them */
+.back { font-size: 15px; font-weight: 500; }
+
+/* buttons */
+.btn-white, .btn-solid, .btn-next { font-size: 15.5px; font-weight: 700; padding: 13px 28px; }
+.btn-dark, .btn-outline, .btn-mini { font-size: 15.5px; font-weight: 600; }
+.btn-dark { padding: 11px 24px; }
+.btn-mini { font-size: 14px; padding: 6px 12px; }
+.btn-danger { font-size: 15px; }
+
+/* chips, badges */
+.chip { font-size: 13px; padding: 9px 18px; gap: 12px; }
+.badge { font-size: 15px; font-weight: 700; padding: 8px 16px; }
+.pill-result, .lvl, .status { font-size: 13px; font-weight: 700; padding: 3px 11px; }
+.verdict-pill { font-size: 14.5px; font-weight: 700; }
+.adminbadge { font-size: 12.5px; }
+
+/* home */
+.hero-title, .home .hero-title { font-weight: 800; font-size: clamp(54px, 8vw, 96px); letter-spacing: -.03em; line-height: 1; margin: 26px 0 14px; }
+.home p.lead { font-size: clamp(20px, 2.3vw, 26px); font-weight: 600; line-height: 1.35; max-width: 760px; }
+.hc-title { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 10px; }
+.hc-text { font-size: 16.5px; line-height: 1.65; }
+.dropnote { font-size: 14px; }
+.homeband b, .homeband.checklist b { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.homeband span { font-size: 15.5px; }
+.homeband .btn-dark { font-size: 15px; }
+/* the four model numbers: big numbers */
+.statstrip { max-width: 900px; }
+.statstrip div { padding: 18px 10px; }
+.statstrip b { font-size: 40px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.statstrip span { display: block; margin-top: 6px; font-size: 12px; }
+@media (max-width: 760px) { .statstrip b { font-size: 30px; } }
+
+/* forms */
+.auth label, .filters label, .reportform label { font-size: 14.5px; font-weight: 600; }
+.auth label a { font-size: 14px; }
+.auth label.check { font-size: 15px; }
+.auth input[type=text], .auth input[type=email], .auth input[type=password], .search, .filters select,
+.reportform select, .reportform textarea, .reportform input[type=email] { font-size: 16px; padding: 12px 14px; }
+.auth .switch, .authtext { font-size: 15px; }
+.flash { font-size: 15px; }
+
+/* stats + tables */
+.stat { padding: 18px 22px; min-width: 170px; }
+.stat span { font-size: 11.5px; }
+.stat b { font-size: 36px; font-weight: 800; letter-spacing: -.03em; }
+.stat b.stat-sm { font-size: 22px; }
+.logs { font-size: 15px; }
+.logs th { font-size: 11.5px; padding: 16px 10px; }
+.logs td { padding: 14px 10px; }
+.info td { font-size: 15px; padding: 12px 6px; }
+
+/* results page */
+.headline { font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
+.todo { font-size: 16px; }
+.sum-app { font-size: 16px; }
+.fact span { font-size: 11px; }
+.fact b { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+.fact i { font-size: 13.5px; }
+.report-link { font-size: 14.5px; }
+.rtabs a { font-size: 15px; font-weight: 600; padding: 11px 10px; }
+.rintro { font-size: 16.5px; }
+.stepnum { width: 34px; height: 34px; font-size: 15px; }
+/* timeline line: centred under the 34px box (17px - half of the 2px line), starts below the box and
+   stops before the next box instead of running into it */
+.step:not(.last)::before { left: 16px; top: 42px; bottom: 8px; }
+.steptitle { font-size: 18px; font-weight: 700; }
+.steptitle .small { font-size: 14px; font-weight: 400; }
+.conflict { font-size: 15.5px; }
+.xai-note { font-size: 15px; }
+.xai-group { font-size: 16px; font-weight: 700; }
+.xai-row { font-size: 15.5px; }
+.rules { font-size: 14.5px; }
+.glossary dt { font-size: 15px; font-weight: 700; }
+.glossary dd { font-size: 14.5px; }
+details.more summary { font-size: 15px; }
+.attack .tid { font-size: 13.5px; }
+.attack .tactic { font-size: 13px; }
+.perms li { font-size: 15px; }
+
+/* quiz */
+.quiz-title { font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
+.quiz .back { font-size: 15px; }
+.quiz .appfacts span { font-size: 14px; }
+.qcat { font-size: 14px; font-weight: 700; }
+.qtext { font-size: 22px; font-weight: 600; line-height: 1.45; }
+.opt { font-size: 16.5px; padding: 15px 18px; }
+.feedback { font-size: 15.5px; }
+.sbig { font-size: 60px; font-weight: 800; }
+
+/* admin */
+.sidebar a { font-size: 15px; font-weight: 500; }
+.side-title { font-size: 11.5px; }
+.tabs a { font-size: 14.5px; font-weight: 600; }
+.rank { font-size: 15px; }
+.reportform .lead { font-size: 16.5px; }
+
+/* Digital Amanah + Mobile Security Checklist */
+.am-chip { font-size: 12.5px; padding: 8px 16px; }
+.am-title { font-size: clamp(42px, 6vw, 66px); font-weight: 800; letter-spacing: -.03em; }
+.am-intro, .am-sub { font-size: 17px; }
+.am-nav a { font-size: 15px; font-weight: 600; }
+.am-kind { font-size: 12px; }
+.am-tag { font-size: 13px; font-weight: 700; }
+.am-h2 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.am-quote { font-size: 18px; }
+.am-lesson { font-size: 15.5px; }
+.am-cta b { font-size: 17px; font-weight: 700; }
+.msc-title { font-size: clamp(40px, 6vw, 64px); font-weight: 800; letter-spacing: -.03em; }
+.msc-intro { font-size: 17px; }
+.msc-pill { font-size: 16px; font-weight: 700; }
+.msc-item { font-size: 16px; }
+
+/* phones */
+@media (max-width: 600px) {
+  .navlink, .navuser { font-size: 14px; }
+  .pill { padding: 7px 12px; font-size: 14px; }
+  .chip { font-size: 11px; letter-spacing: .08em; }
+}
+
+/* admin > Reported APKs: bigger action buttons, laid out as an even 2-column grid */
+.reportrow td:last-child { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; min-width: 300px; }
+.reportrow td:last-child form { display: block; margin: 0; }
+.reportrow .btn-mini { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 10px 12px;
+                       font-size: 14.5px; font-weight: 600; text-align: center; text-decoration: none; white-space: nowrap; }
+.reportrow .btn-mini { display: flex; align-items: center; justify-content: center; height: 44px; line-height: 1; }
+
+/* My History + Scan logs: wider page, long file names wrap, the other columns stay on one line */
+.wrap:has(> .tablecard) { max-width: 1400px; }
+.logs td[title^="SHA-256"] { min-width: 240px; max-width: 420px; overflow-wrap: anywhere; word-break: break-word; }
+.logs tr:not(.reportrow) td:not([title]) { white-space: nowrap; }
+
+/* home tagline: smaller so it fits on one line (wraps normally on phones) */
+.home p.lead { font-size: 19px; max-width: none; white-space: nowrap; }
+@media (max-width: 900px) { .home p.lead { font-size: 17px; white-space: normal; max-width: 640px; } }
+
+/* ---------- results page: "What to do next" advice + privacy note ---------- */
+.privacynote { margin: 4px 0 12px; font-size: 14.5px; color: var(--muted); }
+.advice { margin-top: 22px; padding: 26px 28px; }
+.advice.HIGH { border-left: 4px solid var(--red); }
+.advice.MEDIUM { border-left: 4px solid var(--amber); }
+.advice.LOW { border-left: 4px solid var(--green); }
+.advice-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; }
+.advice-cols.one { grid-template-columns: 1fr; }
+.advice-h { font-family: var(--body); font-size: 18px; font-weight: 700; letter-spacing: normal; text-transform: none; margin: 4px 0 12px; }
+.advice-steps { margin: 0; padding: 0; list-style: none; counter-reset: st; }
+.advice-steps li { counter-increment: st; position: relative; padding: 10px 0 10px 44px; border-top: 1px solid var(--line); font-size: 15.5px; line-height: 1.55; }
+.advice-steps li:first-child { border-top: 0; }
+.advice-steps li::before { content: counter(st); position: absolute; left: 0; top: 9px; width: 30px; height: 30px; border-radius: 50%;
+                           display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+                           color: var(--cyan); border: 1.5px solid var(--cyan); }
+.advice.HIGH .advice-steps li::before { color: var(--red); border-color: var(--red); }
+.advice-steps b { color: var(--text); }
+.advice-steps span { color: var(--muted); }
+.advice-perms { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.advice-perm { padding: 14px 16px; border: 1px solid var(--panel-border); background: rgba(127, 127, 160, .06); }
+.advice-perm b { display: block; font-size: 16px; margin-bottom: 6px; }
+.advice-perm > span { display: block; color: var(--muted); font-size: 14.5px; line-height: 1.55; margin-top: 6px; }
+.advice-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.advice-tags .tag { margin: 0; font-size: 12px; }
+.advice-cols + .advice-h { margin-top: 22px; }
+@media (max-width: 760px) { .advice-cols { grid-template-columns: 1fr; gap: 10px; } .advice { padding: 20px; } }
+
+/* "What should I do?" is a button that opens the step-by-step advice */
+.todo-toggle { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer;
+               border: 1px solid transparent; transition: border-color .2s, background .2s; }
+.todo-toggle:hover { border-color: var(--cyan); }
+.todo-more { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 14.5px; font-weight: 700; color: var(--cyan); }
+.todo-more i { font-style: normal; transition: transform .2s; }
+.todo-toggle[aria-expanded="true"] .todo-more i { transform: rotate(180deg); }
+.advice[hidden] { display: none !important; }
+#advice { scroll-margin-top: 90px; }
+
+/* ---------- "or continue with" + Google button (login / register) ---------- */
+.or-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; color: var(--muted);
+              font-size: 14px; text-transform: none; letter-spacing: normal; }
+.or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.googlebtn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; box-sizing: border-box;
+             padding: 12px 16px; border-radius: 10px; background: #ffffff; color: #1f1f1f; border: 1px solid #dadce0;
+             font-family: var(--body); font-size: 15.5px; font-weight: 600; text-decoration: none;
+             transition: background .2s, box-shadow .2s; }
+.googlebtn:hover { background: #f8f9fa; color: #1f1f1f; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); }
+.googlebtn svg { flex: none; }
+
+/* ---------- Terms of Use / Privacy Policy pages ---------- */
+.wrap.legal { max-width: 860px; }
+.legal .chip { margin-top: 18px; }
+.legal-title { font-family: var(--body); font-size: clamp(36px, 5vw, 52px); font-weight: 800; letter-spacing: -.02em; margin: 16px 0 6px; }
+.legal-updated { color: var(--muted); font-size: 14.5px; margin: 0 0 26px; }
+.legal-summary { padding: 22px 26px; margin-bottom: 30px; }
+.legal-summary ul, .legal-sec ul { margin: 0; padding-left: 22px; }
+.legal-summary li, .legal-sec li { margin: 8px 0; line-height: 1.6; font-size: 16px; }
+.legal-sec { margin-bottom: 30px; }
+.legal-sec h2 { font-size: 22px; margin: 0 0 10px; text-transform: none; letter-spacing: -.01em; }
+.legal-sec p { font-size: 16px; line-height: 1.7; color: var(--text); margin: 0 0 10px; }
+.legal-sec li { color: var(--text); }
+.legal-table td { vertical-align: top; line-height: 1.6; }
+.legal-table td:first-child { width: 26%; font-weight: 600; color: var(--text); }
+
+/* sign-up agreement + consent lines */
+.auth label.check.agree { align-items: flex-start; margin-top: 18px; line-height: 1.5; }
+.auth label.check.agree input { margin-top: 4px; flex: none; }
+.consent { font-size: 13.5px; color: var(--muted); text-align: center; margin: 12px 0 0; line-height: 1.5; }
+.reportform .consent { text-align: left; }
+
+/* site footer */
+.sitefoot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px 24px;
+            max-width: 1180px; margin: 40px auto 0; padding: 22px 24px 30px; border-top: 1px solid var(--line);
+            font-size: 14px; color: var(--muted); }
+.sitefoot nav { display: flex; gap: 20px; }
+.sitefoot a { color: var(--muted); text-decoration: none; }
+.sitefoot a:hover { color: var(--text); text-decoration: underline; }
+.legal .back { display: block; width: fit-content; margin-bottom: 14px; }
+.legal .chip { margin-top: 0; }
+
+/* ---------- theme switch animation: a gentle fade ---------- */
+/* Chrome/Edge: the whole page (background included) cross-fades */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .45s; animation-timing-function: ease; }
+/* other browsers: colours fade into the new theme */
+html.theme-fade, html.theme-fade * {
+  transition: background-color .45s ease, color .45s ease, border-color .45s ease, fill .45s ease, stroke .45s ease, box-shadow .45s ease !important;
+}
+/* sun <-> moon: the two icons simply fade into each other (no spinning) */
+.themebtn { position: relative; }
+.themebtn svg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block !important; transition: opacity .45s ease; }
+.themebtn .moon { opacity: 1; }
+.themebtn .sun  { opacity: 0; }
+html[data-theme="light"] .themebtn .moon { opacity: 0; }
+html[data-theme="light"] .themebtn .sun  { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+  .themebtn svg { transition: none; }
+}
+
+/* ---------- Feedback page ---------- */
+.fbform { padding: 26px 28px; }
+.fbform label { display: block; margin: 18px 0 8px; }
+.fbform label:first-of-type { margin-top: 0; }
+.fbform .lblhint { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: normal; }
+.fbrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
+.reportform input[type=text] { width: 100%; background: rgba(0, 0, 0, .45); border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 0; color: #fff; font-family: var(--body); font-size: 16px; padding: 12px 14px; }
+.reportform input[type=text]:focus { outline: 0; border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+html[data-theme="light"] .reportform input[type=text] { background: #ffffff; color: var(--text); border-color: #94a3b8; }
+.fbform textarea { min-height: 170px; resize: vertical; line-height: 1.55; }
+.fbcount { text-align: right; margin-top: 6px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.sentbox p { font-size: 16px; line-height: 1.6; }
+.sentbox .btn-dark { margin: 6px 8px 0 0; display: inline-block; }
+@media (max-width: 640px) { .fbrow { grid-template-columns: 1fr; } }
+.fbform { margin: 0; max-width: 680px; }
+.fbrow label { margin-top: 18px !important; }
+
+/* keep the footer at the bottom of the window on short pages (e.g. "Thank you" after joining).
+   body is at least 100vh tall; sticky + top:100vh pushes the footer to the end of it. Long pages are unchanged. */
+.sitefoot { position: sticky; top: 100vh; }
+
+/* ---------- phones (up to 640px wide) ----------
+   - top menu wraps onto a second row instead of squeezing "My History" onto two lines
+   - admin menu becomes one row you can swipe sideways (it used to stretch the whole page, so the
+     browser zoomed out and tables were cut off)
+   - number cards sit two per row with the same width */
+@media (max-width: 640px) {
+  nav.top { flex-wrap: wrap; row-gap: 8px; padding: 10px 14px; }
+  nav.top .links { flex-wrap: wrap; justify-content: flex-end; gap: 6px 14px; }
+  .navlink, .navuser { white-space: nowrap; font-size: 13px; }
+  .adminbadge { margin-left: 6px; }
+
+  .admin { flex-direction: column; min-height: 0; }
+  .sidebar { width: 100%; display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 0;
+             -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar a { flex: 0 0 auto; white-space: nowrap; padding: 12px 14px; font-size: 13px; }
+  .sidebar a.on { border-right: 0; box-shadow: inset 0 -3px 0 var(--pink); }
+  .admin-main { padding: 18px 14px; max-width: 100vw; }
+
+  .stats { gap: 12px; }
+  .stats .stat { flex: 1 1 calc(50% - 6px); min-width: 0; padding: 14px 16px; }
+  .stat b { font-size: 30px; }
+
+  .wrap { padding: 0 14px; margin-top: 22px; }
+  .tablecard { max-width: 100%; }
+}
+
+/* Home: login box for guests + "N of 3 scans left today" under each upload box */
+.loginbox { text-decoration: none; color: inherit; }
+.loginbox .u { text-decoration: underline; }
+.dropnote.quota { margin-top: 6px; color: var(--cyan); font-weight: 600; }
+.dropnote.quota.none { color: var(--amber); }
+
+/* very long file names (no spaces) wrap instead of pushing the page sideways */
+.quiz-title b, .back b, .sum-app, .info td { overflow-wrap: anywhere; }
+
+
+/* tab menu (results page): clearer, so people notice there is more to explore */
+.rtabs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 34px 0 10px; }
+.rtabs-head b { font-size: 21px; font-weight: 800; color: var(--text); }
+.rtabs-head span { font-size: 15px; color: var(--muted); }
+.rtabs { margin-top: 0; gap: 8px; padding: 8px; border: 1px solid rgba(29, 233, 255, .35);
+         box-shadow: 0 0 22px rgba(29, 233, 255, .10); }
+.rtabs a { color: var(--text); background: rgba(255, 255, 255, .04); border: 1px solid var(--panel-border); }
+.rtabs a:hover { color: #fff; border-color: var(--cyan); background: rgba(29, 233, 255, .10); }
+.rtabs a.on { color: #120012; background: var(--pink); border-color: var(--pink); box-shadow: 0 0 16px rgba(255, 47, 214, .45); }
+.rtabs em { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+            font-size: 12px; font-weight: 800; color: var(--cyan); background: rgba(29, 233, 255, .14); }
+.rtabs a.on em { color: #120012; background: rgba(18, 0, 18, .15); }
+.rtabs a.on .tcount { color: #120012; border-color: rgba(18, 0, 18, .35); }
+html[data-theme="light"] .rtabs { border-color: rgba(14, 116, 144, .35); box-shadow: 0 2px 12px rgba(15, 23, 42, .08); }
+html[data-theme="light"] .rtabs a { background: #f8fafc; border-color: #e2e8f0; }
+html[data-theme="light"] .rtabs a:hover { color: var(--text); border-color: var(--cyan); background: rgba(14, 116, 144, .06); }
+html[data-theme="light"] .rtabs a.on { color: #fff; background: var(--pink); border-color: var(--pink); box-shadow: none; }
+html[data-theme="light"] .rtabs em { background: rgba(14, 116, 144, .12); }
+html[data-theme="light"] .rtabs a.on em { color: #fff; background: rgba(255, 255, 255, .22); }
+html[data-theme="light"] .rtabs a.on .tcount { color: #fff; border-color: rgba(255, 255, 255, .5); }

@@ -1,0 +1,7 @@
+<script>
+  // Show / hide password when the eye icon is clicked
+  document.querySelectorAll(".eye").forEach(btn => btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.dataset.for);
+    input.type = input.type === "password" ? "text" : "password";
+  }));
+</script>

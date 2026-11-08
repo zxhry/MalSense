@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}My History - MalSense{% endblock %}
+{% block content %}
+<div class="wrap">
+  <h2 class="pagetitle">My scan history</h2>
+
+  <div class="stats">
+    <div class="stat"><span>Total scans</span><b>{{ stats.total }}</b></div>
+    <div class="stat"><span>Malware detected</span><b>{{ stats.malware }}</b></div>
+    <div class="stat"><span>Benign files</span><b>{{ stats.benign }}</b></div>
+  </div>
+
+  <div class="card tablecard">
+    {% if scans.items %}
+    <table class="logs">
+      <thead><tr><th>#</th><th>File name</th><th>Package</th><th>Result</th><th>Confidence</th><th>VirusTotal</th><th>Date</th><th>Report</th></tr></thead>
+      <tbody>
+      {% for s in scans.items %}
+        {% set colour = "var(--red)" if s.ml_result == "Malware" else "var(--green)" %}
+        <tr>
+          <td class="small">{{ s.user_scan_no }}</td>
+          <td title="SHA-256: {{ s.file_hash }}">{% if s.details %}<a href="{{ url_for('result', no=s.user_scan_no) }}">{{ s.filename }}</a>{% else %}{{ s.filename }}{% endif %}<div class="small">{{ s.file_size }}</div></td>
+          <td class="small">{{ s.package_name or "-" }}</td>
+          <td><span class="pill-result {{ s.ml_result }}">{{ s.ml_result }}</span></td>
+          <td><div class="minibar"><span style="width:{{ s.confidence|round|int }}%; background:{{ colour }}"></span></div>
+              <span class="small">{{ s.confidence|round|int }}%</span></td>
+          <td>{{ s.vt_result or "-" }}</td>
+          <td>{{ s.scanned_at.strftime("%d %b %Y") }}<div class="small">{{ s.scanned_at.strftime("%H:%M") }}</div></td>
+          <td>{% if s.details %}<a href="{{ url_for('download_report', no=s.user_scan_no, fmt='pdf') }}">PDF</a> &middot;
+              <a href="{{ url_for('download_report', no=s.user_scan_no, fmt='docx') }}">DOCX</a>{% else %}<span class="small">-</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if scans.pages > 1 %}
+    <div class="pager arrows">
+      {% if scans.has_prev %}<a class="pager-arrow" href="{{ url_for('history', page=scans.prev_num) }}" title="Previous page" aria-label="Previous page">&#8249;</a>
+      {% else %}<span class="pager-arrow off" aria-hidden="true">&#8249;</span>{% endif %}
+      <span class="small">Page {{ scans.page }} of {{ scans.pages }}</span>
+      {% if scans.has_next %}<a class="pager-arrow" href="{{ url_for('history', page=scans.next_num) }}" title="Next page" aria-label="Next page">&#8250;</a>
+      {% else %}<span class="pager-arrow off" aria-hidden="true">&#8250;</span>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+      <p class="empty">You have no scans yet. <a href="{{ url_for('home') }}">Scan your first APK</a> &mdash; it will appear here.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

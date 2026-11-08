@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block title %}Scan results - MalSense{% endblock %}
+{% block content %}
+{% set vt = r.virustotal %}
+{% set p = r.malware_probability %}
+{% set model_mal = r.verdict == "MALWARE" %}
+{% set conf = p if model_mal else 1 - p %}
+{% set vt_found = vt.status == "found" %}
+{% set vf = (vt.flagged or 0) if vt_found else 0 %}
+{% set rid = rule_id(r.verdict, vt) %}
+{% set disagree = rid in (1, 3, 4) and ((model_mal and vf == 0) or (not model_mal and vf >= 1)) %}
+{# each check is coloured by ITS OWN result; the big badge shows the FINAL decision #}
+{% set mcolour = "var(--red)" if model_mal else "var(--green)" %}
+{% set vcolour = "var(--red)" if vf >= VT_CONFIRM else ("var(--amber)" if vf >= 1 else "var(--green)") %}
+{% set danger = r.explanation | selectattr("direction", "equalto", "malware") | list %}
+{% set safety = r.explanation | rejectattr("direction", "equalto", "malware") | list %}
+{% set perm_text = r.dangerous_text or {} %}
+{% set fam = family_of(vt) %}
+{% set techs = attack_techniques(r.permissions or r.dangerous_permissions) %}
+{% set mt = r.malware_type %}
+{% set rcolour = {'HIGH': 'var(--red)', 'MEDIUM': 'var(--amber)', 'LOW': 'var(--green)'}[r.risk] %}
+<div class="wrap result">
+  <a class="back" href="{{ url_for('home') }}">&larr; Scan results for <b title="{{ filename }}">{{ filename|shortname }}</b></a>
+  {% if current_user.is_authenticated and saved %}<span class="savednote">&#10003; Saved to <a href="{{ url_for('history') }}">My History</a></span>{% endif %}
+
+  {# SUMMARY: the answer first, always visible #}
+  <section class="card verdict summary {{ r.risk }}">
+    <div class="sum-main">
+      <span class="badge {{ r.risk }}">
+        {% if r.risk == "HIGH" %}&#9888; Malware detected{% elif r.risk == "MEDIUM" %}&#9888; Suspicious &ndash; be careful{% else %}&#10004; No malware detected{% endif %}
+      </span>
+      <p class="headline">
+        {% if r.risk == "HIGH" %}This app is dangerous. Do not install it.
+        {% elif r.risk == "MEDIUM" %}This app might be dangerous. The two checks did not fully agree.
+        {% else %}No signs of malware were found in this app.{% endif %}
+      </p>
+      <button type="button" class="todo todo-toggle" aria-expanded="false" aria-controls="advice"><b>What should I do?</b> {{ r.action }}<span class="todo-more"><span class="todo-label">Show step-by-step advice</span> <i aria-hidden="true">&#9662;</i></span></button>
+      <div class="privacynote">&#128274; MalSense scanned a copy of your APK without installing it, and deleted that copy right after the scan. Your original file is still on your device.</div>
+      <div class="sum-app">{{ r.app_name or filename }} <span class="small">&middot; {{ r.package }} &middot; {{ "%.1f"|format(r.file_size / 1048576) }} MB</span></div>
+    </div>
+    {# key facts: each one opens the tab that explains it #}
+    <div class="sum-facts">
+      <a class="fact" href="#decision" data-tab="decision"><span>AI model</span>
+        <b style="color:{{ mcolour }}">{{ "Malicious" if model_mal else "Safe" }}</b><i>{{ (conf * 100)|round|int }}% sure</i></a>
+      <a class="fact" href="#vt" data-tab="vt"><span>VirusTotal</span>
+        <b style="color:{{ vcolour if vt_found else 'var(--muted)' }}">{{ vt.detection_ratio if vt_found else "No result" }}</b><i>{{ "engines flagged it" if vt_found else "not checked" }}</i></a>
+      <a class="fact" href="#decision" data-tab="decision"><span>Final risk</span>
+        <b style="color:{{ rcolour }}">{{ r.risk }}</b><i>rule {{ rid }} of 5</i></a>
+      <a class="fact" href="#intel" data-tab="intel"><span>Malware family</span>
+        <b>{{ fam[0]|title if fam[0] else "&mdash;"|safe }}</b><i>{{ techs|length }} ATT&amp;CK technique{{ "" if techs|length == 1 else "s" }}</i></a>
+    </div>
+    <div class="sum-actions">
+      {% if links.pdf %}
+        <a class="btn-solid" href="{{ links.pdf }}">&#10515; Report (PDF)</a>
+        <a class="btn-solid" href="{{ links.docx }}">&#10515; Report (DOCX)</a>
+      {% elif not current_user.is_authenticated %}
+        <a class="btn-dark" href="{{ url_for('login') }}">Log in to download report</a>
+      {% endif %}
+      <a class="btn-dark" href="{{ url_for('home') }}">Scan another file</a>
+      <p class="report-link">Think this result is wrong? {% if current_user.is_authenticated %}<a href="{{ url_for('report_apk', reason='wrong_result') }}">Report this APK to the admin</a>{% else %}<a href="{{ url_for('login', next=url_for('report_apk', reason='wrong_result')) }}">Log in</a> to report this APK to the admin{% endif %}</p>
+    </div>
+  </section>
+
+  {# ADVICE: what to do next, based on the risk level and this app's permissions #}
+  {% set adv = advice_for(r) %}
+  <section class="card advice {{ r.risk }}" id="advice" aria-labelledby="advice-title">
+    <h4 id="advice-title">What to do next</h4>
+    <div class="advice-cols{{ ' one' if not adv.installed }}">
+      <div>
+        <h3 class="advice-h">{{ "Before you install" if r.risk != "HIGH" else "Right now" }}</h3>
+        <ol class="advice-steps">
+          {% for title, text in adv.now %}<li><b>{{ title }}</b> <span>{{ text }}</span></li>{% endfor %}
+        </ol>
+      </div>
+      {% if adv.installed %}
+      <div>
+        <h3 class="advice-h">If you already installed it</h3>
+        <ol class="advice-steps">
+          {% for title, text in adv.installed %}<li><b>{{ title }}</b> <span>{{ text }}</span></li>{% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+    </div>
+    {% if adv.perms %}
+    <h3 class="advice-h">Because this app asks for&hellip;</h3>
+    <div class="advice-perms">
+      {% for p in adv.perms %}
+      <div class="advice-perm"><b>{{ p.title }}</b>
+        <div class="advice-tags">{% for n in p.perms %}<span class="tag">{{ n }}</span>{% endfor %}</div>
+        <span>{{ p.tip }}</span></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  {# TABS: explore one topic at a time #}
+  <div class="rtabs-head">
+    <b>Explore the full report</b>
+    <span>Click a tab below to see each part of the scan.</span>
+  </div>
+  <nav class="rtabs" role="tablist" aria-label="Scan details">
+    <a role="tab" id="t-decision" href="#decision" data-tab="decision"><em>1</em> How it decided</a>
+    <a role="tab" id="t-why" href="#why" data-tab="why"><em>2</em> AI explanation</a>
+    <a role="tab" id="t-vt" href="#vt" data-tab="vt"><em>3</em> VirusTotal <span class="tcount">{{ vt.detection_ratio if vt_found else "&ndash;"|safe }}</span></a>
+    <a role="tab" id="t-perms" href="#perms" data-tab="perms"><em>4</em> App features <span class="tcount">{{ (r.permissions or [])|length + ((mt.behaviours.action or [])|length + (mt.behaviours.api or [])|length if mt and mt.behaviours else 0) }}</span></a>
+    <a role="tab" id="t-intel" href="#intel" data-tab="intel"><em>5</em> Threat intel <span class="tcount">{{ techs|length }}</span></a>
+    <a role="tab" id="t-file" href="#file" data-tab="file"><em>6</em> File &amp; IOCs</a>
+  </nav>
+
+  <section class="rpanel" id="tab-decision" role="tabpanel" aria-labelledby="t-decision">
+    <p class="rintro">MalSense checks every file in two independent ways &ndash; an AI model and VirusTotal &ndash; then combines them with five fixed rules.</p>
+      {# 2. HOW MALSENSE DECIDED: step 1 AI, step 2 VirusTotal, step 3 final rule #}
+      <div class="card">
+        <h4>HOW MALSENSE DECIDED</h4>
+
+        <div class="step">
+          <div class="stepnum">1</div>
+          <div class="stepbody">
+            <div class="steptitle">AI model check <span class="small">(XGBoost)</span>
+              <span class="verdict-pill" style="color:{{ mcolour }}">{{ "MALICIOUS" if model_mal else "SAFE" }}</span></div>
+            <div class="small">Looked at what the app asks for (permissions, size, screens, services) and compared it
+              with tens of thousands of real apps it learned from.</div>
+            <div class="row"><span>How sure the AI is</span><span style="color:{{ mcolour }}">{{ (conf * 100)|round|int }}%</span></div>
+            <div class="bar"><span style="width:{{ (conf * 100)|round|int }}%; background:{{ mcolour }}"></span></div>
+            <div class="small">The AI is {{ "highly " if conf >= 0.9 else "" }}confident this file is
+              <b>{{ "malicious" if model_mal else "safe" }}</b> (malware probability {{ "%.1f"|format(p * 100) }}%).
+              {% if r.explanation %}<a href="#why" data-tab="why">See why &rarr;</a>{% endif %}</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="stepnum">2</div>
+          <div class="stepbody">
+            <div class="steptitle">VirusTotal check <span class="small">(antivirus engines)</span>
+              {% if vt_found %}<span class="verdict-pill" style="color:{{ vcolour }}">{{ "MALWARE" if vf >= VT_CONFIRM else ("SUSPICIOUS" if vf else "CLEAN") }}</span>
+              {% else %}<span class="verdict-pill" style="color:var(--muted)">NO RESULT</span>{% endif %}</div>
+            {% if vt_found %}
+              <div class="small">The file's fingerprint (SHA-256 hash) was checked by {{ vt.engines_total }} antivirus
+                companies. The file itself was not uploaded.</div>
+              <div class="row"><span>Engines that flagged it</span><span style="color:{{ vcolour }}">{{ vt.detection_ratio }}</span></div>
+              <div class="bar"><span style="width:{{ [((vf / vt.engines_total) * 100)|round|int, 2]|max if vt.engines_total else 0 }}%; background:{{ vcolour }}"></span></div>
+              <div class="small">{{ vf }} of {{ vt.engines_total }} antivirus engines say this file is dangerous.
+                {% if vt.threat_label %}They call it <b>{{ vt.threat_label }}</b>.{% endif %}</div>
+            {% else %}
+              <div class="small">{{ vt.message or "VirusTotal could not check this file." }}
+                So this result relies on the AI model only.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="step last">
+          <div class="stepnum">3</div>
+          <div class="stepbody">
+            <div class="steptitle">Final decision
+              <span class="verdict-pill" style="color:{{ {'HIGH': 'var(--red)', 'MEDIUM': 'var(--amber)', 'LOW': 'var(--green)'}[r.risk] }}">{{ r.risk }} RISK</span></div>
+            <div class="small">MalSense applied <b>rule {{ rid }}</b>: {{ RULES[rid - 1][1] }}
+              &rarr; <b>{{ r.risk }} risk</b>.</div>
+
+            {% if disagree %}
+            <div class="conflict {{ r.risk }}">
+              <b>&#9888; Why do the two checks disagree?</b>
+              {% if rid == 1 %}
+                The AI did not recognise this app as malware, but {{ vf }} antivirus engines already know this exact
+                file as malicious. When {{ VT_CONFIRM }} or more engines agree, MalSense trusts them &ndash;
+                <b>treat this app as malware.</b> The AI only sees what the app asks for (its permissions); some malware
+                asks for very little and hides its behaviour inside its code. That is why every scan is double-checked.
+              {% elif rid == 4 %}
+                The AI rated this app as safe, but {{ vf }} antivirus engine{{ "s" if vf != 1 }} flag{{ "s" if vf == 1 }} it.
+                A small number of detections is often a false alarm (an engine being over-careful), but it can
+                also be real &ndash; so be careful.
+              {% else %}
+                The AI found warning signs in what this app asks for, but no antivirus engine
+                {{ "flags it" if vt_found else "has a record of it" }}. This can mean brand-new malware that
+                antivirus companies do not know yet &ndash; or a false alarm.
+              {% endif %}
+            </div>
+            {% endif %}
+
+            <details class="more">
+              <summary>See all decision rules</summary>
+              <table class="rules">
+                {% for n, text, level in RULES %}
+                <tr class="{{ 'applied' if n == rid }}">
+                  <td>{{ n }}</td><td>{{ text }}</td>
+                  <td><span class="lvl {{ level }}">{{ level }}</span>{% if n == rid %} &larr; this file{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </table>
+              <div class="small">Why {{ VT_CONFIRM }} engines? One or two engines on their own are often false alarms;
+                research (Zhu et al., USENIX Security 2020) found that thresholds between 2 and 31 engines give
+                stable results.</div>
+            </details>
+          </div>
+        </div>
+      </div>
+  </section>
+
+  <section class="rpanel" id="tab-why" role="tabpanel" aria-labelledby="t-why">
+    <p class="rintro">Explainable AI: which features pushed the model towards &ldquo;malware&rdquo; or &ldquo;safe&rdquo; for <i>this</i> app.</p>
+      {# 3. EXPLAINABLE AI: why did the AI say safe / malicious? #}
+      {% if r.explanation %}
+      <div class="card">
+        <h4>WHY DID THE AI SAY {{ "MALICIOUS" if model_mal else "SAFE" }}?</h4>
+        <div class="small" style="margin-top:-6px">These are the things that influenced the AI's answer the most.
+          A longer bar means a stronger effect.</div>
+        {% if rid == 1 and not model_mal %}
+        <div class="xai-note">These are the reasons the AI <i>thought</i> the app was safe. Remember: VirusTotal proved
+          otherwise. The AI can only see what the app asks for, not hidden code.</div>
+        {% endif %}
+
+        <div class="xai-group danger">&#9888; Signs of danger</div>
+        <div class="xai">
+        {% for e in danger %}
+          <div class="xai-row">
+            <div class="xai-text">{{ e.label }}{% if e.value not in ("yes", "no") %}: <b>{{ e.value }}</b>{% endif %}
+              {% if e.meaning %}<div class="small">Lets an app {{ e.meaning }}</div>{% endif %}</div>
+            <div class="xai-bar"><span class="malware" style="width:{{ e.width }}%"></span></div>
+          </div>
+        {% else %}
+          <div class="small none">None among the top reasons.</div>
+        {% endfor %}
+        </div>
+
+        <div class="xai-group safe">&#10004; Signs of safety</div>
+        <div class="xai">
+        {% for e in safety %}
+          <div class="xai-row">
+            <div class="xai-text">{{ e.label }}{% if e.value not in ("yes", "no") %}: <b>{{ e.value }}</b>{% endif %}
+              {% if e.meaning %}<div class="small">{% if e.value == "no" %}This permission would let an app {{ e.meaning }}{% else %}Lets an app {{ e.meaning }}{% endif %}</div>{% endif %}</div>
+            <div class="xai-bar"><span class="safe" style="width:{{ e.width }}%"></span></div>
+          </div>
+        {% else %}
+          <div class="small none">None among the top reasons.</div>
+        {% endfor %}
+        </div>
+
+        <details class="more">
+          <summary>How does the AI explain itself?</summary>
+          <div class="small">MalSense uses <b>Explainable AI (SHAP)</b>. For every scan it measures how much each
+            feature pushed the answer towards "malware" or towards "safe". Malware usually asks for many risky
+            permissions (reading SMS, phone details, accounts), so asking for them is a sign of danger. Not asking
+            for them is a sign of safety. Things like file size or number of screens only matter in combination
+            with everything else.</div>
+        </details>
+      </div>
+      {% else %}
+      <div class="card"><div class="small">No AI explanation was saved for this older scan &ndash; scan the file again to see it.</div></div>
+      {% endif %}
+
+  </section>
+
+  <section class="rpanel" id="tab-vt" role="tabpanel" aria-labelledby="t-vt">
+    <p class="rintro">A second opinion from dozens of antivirus engines, looked up by the file&rsquo;s fingerprint (hash).</p>
+      {# 4. VirusTotal details #}
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h4 style="margin:0">VirusTotal validation</h4>
+          {% if vt_found %}<span class="badge {{ 'HIGH' if vf >= VT_CONFIRM else ('MEDIUM' if vf else 'LOW') }}" style="font-size:12px">{{ vt.detection_ratio }} flagged</span>{% endif %}
+        </div>
+        {% if vt_found %}
+          <div class="small">Each dot is one antivirus company. Red dots flagged this file as dangerous.</div>
+          <div class="dots">{% for i in range(vt.engines_total) %}<span class="dot {{ 'flag' if i < vf }}"></span>{% endfor %}</div>
+          <div class="legend"><span><span class="dot flag" style="display:inline-block"></span> Flagged</span>
+                              <span><span class="dot" style="display:inline-block"></span> Clean</span>
+                              <a href="{{ vt.link }}" target="_blank" rel="noopener">View on VirusTotal</a></div>
+        {% else %}
+          <div class="small">{{ vt.message }}</div>
+        {% endif %}
+        <details class="more">
+          <summary>What is VirusTotal?</summary>
+          <div class="small">VirusTotal is a free service that checks files with dozens of antivirus products at once.
+            MalSense only sends the file's fingerprint (hash), never the file itself. If VirusTotal has never seen
+            the file, it has no result &ndash; this is common for new or private apps.</div>
+        </details>
+      </div>
+  </section>
+
+  <section class="rpanel" id="tab-perms" role="tabpanel" aria-labelledby="t-perms">
+    <p class="rintro">What the app asks for and what its code can do &ndash; the three kinds of static features MalSense
+      analyses: <b>permissions</b>, <b>intents</b> and <b>API calls</b>. Items marked in red are worth a closer look.</p>
+      {% set beh = (mt.behaviours if mt and mt.behaviours else {}) %}
+
+      {# 1. PERMISSIONS (main AI model, KronoDroid) #}
+      <div class="card feat-card">
+        <h4>1 &middot; Permissions ({{ (r.permissions or [])|length }})</h4>
+        <div class="small feat-what">What the app asks Android for. <b>Dangerous</b> permissions give access to private data
+          or phone features &ndash; normal apps use some of them too, so ask yourself whether <i>this</i> app really needs each one.</div>
+        {% if r.dangerous_permissions %}
+          <ul class="perms">
+          {% for d in r.dangerous_permissions %}
+            <li><span class="tag">{{ d }}</span>
+              <div class="small">Lets the app {{ perm_text.get(d) or PERMISSION_TEXT.get(d) or "access protected data or features" }}</div></li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <div class="small">This app does not ask for any dangerous permissions.</div>
+        {% endif %}
+        {% set others = (r.permissions or []) | reject("in", r.dangerous_permissions or []) | list %}
+        {% if others or r.custom_permissions %}
+        <details class="more">
+          <summary>Other permissions ({{ others|length + (r.custom_permissions or [])|length }})</summary>
+          <div class="feat-tags">{% for p in others %}<span class="tag neutral">{{ p }}</span>{% endfor %}
+            {% for p in r.custom_permissions or [] %}<span class="tag neutral" title="custom permission">{{ p.split(".")[-1] }}</span>{% endfor %}</div>
+          {% if r.custom_permissions %}<div class="small">Custom permissions are defined by an app itself, not by Android.</div>{% endif %}
+        </details>
+        {% endif %}
+      </div>
+
+      {# 2. INTENTS and 3. API CALLS (feature list from CICMalDroid 2020) #}
+      {% if beh %}
+      <div class="card feat-card">
+        <h4>2 &middot; Intents ({{ (beh.action or [])|length }})</h4>
+        <div class="small feat-what">System events the app listens for, and actions it asks Android to do &ndash; found in
+          the app's manifest or code. They show <i>when</i> the app springs into action.</div>
+        {% set items = beh.action or [] %}
+        {% set old = items | select("string") | list %}
+        {% set risky = items | reject("string") | selectattr("risky") | list %}
+        {% set normal = items | reject("string") | rejectattr("risky") | list %}
+        {% if items %}
+          {% if risky %}
+          <ul class="perms">
+          {% for a in risky %}
+            <li><span class="tag">{{ a.name }}</span>
+              <div class="small">{{ a.meaning[:1]|upper }}{{ a.meaning[1:] }}</div></li>
+          {% endfor %}
+          </ul>
+          {% else %}
+          <div class="small">None of the intents found are worth a closer look.</div>
+          {% endif %}
+          {% if normal or old %}
+          <details class="more">
+            <summary>Other intents ({{ normal|length + old|length }})</summary>
+            <ul class="perms">
+            {% for a in normal %}
+              <li><span class="tag neutral">{{ a.name }}</span>
+                <div class="small">{{ a.meaning[:1]|upper }}{{ a.meaning[1:] }}</div></li>
+            {% endfor %}
+            {% for a in old %}<li><span class="tag neutral">{{ a.split(" - ")[0] }}</span>
+              {% if " - " in a %}<div class="small">{{ a.split(" - ", 1)[1][:1]|upper }}{{ a.split(" - ", 1)[1][1:] }}</div>{% endif %}</li>{% endfor %}
+            </ul>
+          </details>
+          {% endif %}
+        {% else %}
+          <div class="small">None of the intents MalSense looks for were found.</div>
+        {% endif %}
+        {% if beh.category %}<div class="small">Intent categories: {{ beh.category|join(", ") }}</div>{% endif %}
+      </div>
+
+      <div class="card feat-card">
+        <h4>3 &middot; API calls ({{ (beh.api or [])|length }})</h4>
+        <div class="small feat-what">Sensitive Android functions the app's <b>code</b> calls. Unlike permissions, these show
+          what the app is actually programmed to do.</div>
+        {% set items = beh.api or [] %}
+        {% set old = items | select("string") | list %}
+        {% set risky = items | reject("string") | selectattr("risky") | list %}
+        {% set normal = items | reject("string") | rejectattr("risky") | list %}
+        {% if items %}
+          {% if risky %}
+          <ul class="perms">
+          {% for a in risky %}
+            <li><span class="tag">{{ a.name }}</span>
+              <div class="small">{{ a.meaning[:1]|upper }}{{ a.meaning[1:] }}</div></li>
+          {% endfor %}
+          </ul>
+          {% else %}
+          <div class="small">None of the API calls found are worth a closer look.</div>
+          {% endif %}
+          {% if normal or old %}
+          <details class="more">
+            <summary>Other API calls ({{ normal|length + old|length }})</summary>
+            <ul class="perms">
+            {% for a in normal %}
+              <li><span class="tag neutral">{{ a.name }}</span>
+                <div class="small">{{ a.meaning[:1]|upper }}{{ a.meaning[1:] }}</div></li>
+            {% endfor %}
+            {% for a in old %}<li><span class="tag neutral">{{ a.split(" - ")[0] }}</span>
+              {% if " - " in a %}<div class="small">{{ a.split(" - ", 1)[1][:1]|upper }}{{ a.split(" - ", 1)[1][1:] }}</div>{% endif %}</li>{% endfor %}
+            </ul>
+          </details>
+          {% endif %}
+        {% else %}
+          <div class="small">None of the sensitive API calls MalSense looks for were found.</div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="card feat-card">
+        <h4>2 &middot; Intents &nbsp;&middot;&nbsp; 3 &middot; API calls</h4>
+        <div class="small">{% if r.risk == "LOW" %}Intents and API calls are read from the app's code by MalSense's second AI
+          model, which only runs when an app is rated MEDIUM or HIGH risk. This app was rated LOW, so they were not analysed.
+          {% else %}This scan was saved before intents and API calls were analysed &ndash; scan the file again to see them.{% endif %}</div>
+      </div>
+      {% endif %}
+      <div class="small feat-src">Permissions are used by the main AI model (trained on the KronoDroid dataset). Intents and API calls are read from the app's code and explained here for your information; they do not change the AI verdict. Which of them to examine was chosen using the CICMalDroid 2020 dataset.</div>
+  </section>
+
+  <section class="rpanel" id="tab-intel" role="tabpanel" aria-labelledby="t-intel">
+    <p class="rintro">Threat intelligence: the malware family (from VirusTotal) and the attacker techniques these permissions make possible (MITRE ATT&amp;CK).</p>
+      {# Threat intelligence: malware family + MITRE ATT&CK for Mobile #}
+      <div class="card ti-card">
+        <h4>Threat intelligence</h4>
+        <table class="info">
+          <tr><td>Malware family</td><td>{% if fam[0] %}<b>{{ fam[0]|title }}</b>{% else %}<span class="small">Not identified{{ " (VirusTotal has no family label)" if vt_found else " (VirusTotal has no record)" }}</span>{% endif %}</td></tr>
+          {% if fam[1] %}<tr><td>Threat category</td><td>{{ fam[1]|title }}</td></tr>{% endif %}
+        </table>
+        <div class="small" style="margin:16px 0 4px"><b>MITRE ATT&amp;CK for Mobile</b> &ndash; attacker techniques this app's
+          permissions make possible. A permission makes a technique <i>possible</i>; it does not prove the app uses it.</div>
+        {% if techs %}
+        <ul class="attack">
+          {% for t in techs %}
+          <li><a class="tid" href="{{ t.url }}" target="_blank" rel="noopener">{{ t.id }}</a>
+            <div><b>{{ t.name }}</b> <span class="tactic">{{ t.tactic }}</span>
+              <div class="small">via {{ t.permissions | join(", ") }}</div></div></li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          <div class="small">None of this app's permissions map to a known attacker technique.</div>
+        {% endif %}
+      </div>
+  </section>
+
+  <section class="rpanel" id="tab-file" role="tabpanel" aria-labelledby="t-file">
+    <p class="rintro">Identifiers of the sample. Hashes are indicators of compromise (IOCs) you can search for in other tools.</p>
+      {# File information #}
+      <div class="card">
+        <h4>&#9432; File information</h4>
+        <table class="info">
+          <tr><td>File name</td><td>{{ filename }}</td></tr>
+          <tr><td>File size</td><td>{{ "%.1f"|format(r.file_size / 1048576) }} MB</td></tr>
+          <tr><td>SHA-256 hash</td><td class="hash" style="user-select: all">{{ r.sha256 }}</td></tr>
+          {% if r.sha1 %}<tr><td>SHA-1 hash</td><td class="hash" style="user-select: all">{{ r.sha1 }}</td></tr>{% endif %}
+          {% if r.md5 %}<tr><td>MD5 hash</td><td class="hash" style="user-select: all">{{ r.md5 }}</td></tr>{% endif %}
+          <tr><td>App / package</td><td>{{ r.app_name }} <span class="small">({{ r.package }})</span></td></tr>
+          <tr><td>SDK version</td><td>{{ "API " ~ r.min_sdk if r.min_sdk else "unknown" }} (minimum)</td></tr>
+          <tr><td>Scan duration</td><td>{{ "%.1f"|format(duration) }} seconds</td></tr>
+          <tr><td>Scanned on</td><td>{{ scanned_on }}</td></tr>
+        </table>
+      </div>
+  </section>
+
+      {# Glossary #}
+      <details class="card glossary-card rglossary">
+        <summary><h4>Words on this page</h4></summary>
+        <dl class="glossary">
+          <dt>Malware</dt><dd>An app made to harm you, e.g. steal data or money, or spy on you.</dd>
+          <dt>Permission</dt><dd>Something an app must ask Android for, e.g. reading your contacts or SMS.</dd>
+          <dt>Malware probability</dt><dd>How likely the AI thinks the app is malware. 50% or more = malicious.</dd>
+          <dt>Antivirus engine</dt><dd>One antivirus company's scanner (e.g. Kaspersky, ESET) on VirusTotal.</dd>
+          <dt>SHA-256 hash</dt><dd>A unique fingerprint of the file. Any change to the file changes the hash.</dd>
+          <dt>False alarm</dt><dd>A safe app wrongly flagged as malware (false positive).</dd>
+        </dl>
+      </details>
+</div>
+
+<script>
+  // Tabs: one topic at a time. Without JavaScript every section is simply shown one below the other.
+  (() => {
+    const tabs = [...document.querySelectorAll(".rtabs [data-tab]")];
+    const keys = tabs.map(t => t.dataset.tab);
+    document.documentElement.classList.add("tabs-on");
+    function show(key, focus, remember) {
+      if (!keys.includes(key)) key = "decision";
+      tabs.forEach(t => { const on = t.dataset.tab === key;
+        t.classList.toggle("on", on); t.setAttribute("aria-selected", on); t.tabIndex = on ? 0 : -1;
+        if (on && focus) t.focus({ preventScroll: true }); });
+      document.querySelectorAll(".rpanel").forEach(p => p.classList.toggle("on", p.id === "tab-" + key));
+      if (remember) history.replaceState(null, "", "#" + key);     // only after the user picks a tab
+    }
+    document.addEventListener("click", e => {
+      const a = e.target.closest("[data-tab]");
+      if (!a) return;
+      e.preventDefault(); show(a.dataset.tab, false, true);
+      if (!a.closest(".rtabs")) document.querySelector(".rtabs").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    document.querySelector(".rtabs").addEventListener("keydown", e => {   // arrow keys move between tabs
+      const i = keys.indexOf(document.activeElement.dataset.tab);
+      if (i < 0 || !["ArrowLeft", "ArrowRight"].includes(e.key)) return;
+      e.preventDefault(); show(keys[(i + (e.key === "ArrowRight" ? 1 : keys.length - 1)) % keys.length], true, true);
+    });
+    // Always open at the TOP of the page (the verdict first), even if a tab name is in the address
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    show((location.hash || "").replace(/^#(tab-)?/, ""));
+    window.scrollTo(0, 0);
+    window.addEventListener("load", () => window.scrollTo(0, 0));
+  })();
+</script>
+
+<script>
+  // "What should I do?" opens / closes the step-by-step advice (hidden until clicked).
+  // Without JavaScript the advice simply stays visible.
+  (function () {
+    var btn = document.querySelector(".todo-toggle"), box = document.getElementById("advice");
+    if (!btn || !box) return;
+    var label = btn.querySelector(".todo-label");
+    box.hidden = true;
+    btn.addEventListener("click", function () {
+      var open = box.hidden;
+      box.hidden = !open;
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      label.textContent = open ? "Hide step-by-step advice" : "Show step-by-step advice";
+      if (open) box.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  })();
+</script>
+{% endblock %}

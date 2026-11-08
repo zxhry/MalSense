@@ -1,0 +1,58 @@
+{% extends "admin_base.html" %}
+{% block title %}Scan logs - MalSense Admin{% endblock %}
+{% block admin %}
+<h2 class="pagetitle">Scan logs</h2>
+<div class="stats">
+  <div class="stat"><span>Total scans</span><b>{{ stats.total }}</b></div>
+  <div class="stat"><span>Today's scans</span><b>{{ stats.today }}</b></div>
+  <div class="stat"><span>Malware detected</span><b>{{ stats.malware }}</b></div>
+  <div class="stat"><span>Benign files</span><b>{{ stats.benign }}</b></div>
+</div>
+<form class="filters" method="get">
+  <input class="search" name="q" value="{{ q }}" placeholder="Search by filename, user or hash...">
+  <select name="result" onchange="this.form.submit()">
+    <option value="">All results</option>
+    <option value="Malware" {{ "selected" if result_f == "Malware" }}>Malware</option>
+    <option value="Benign" {{ "selected" if result_f == "Benign" }}>Benign</option>
+  </select>
+  <select name="date" onchange="this.form.submit()">
+    <option value="">All dates</option>
+    <option value="today" {{ "selected" if date_f == "today" }}>Today</option>
+    <option value="7d" {{ "selected" if date_f == "7d" }}>Last 7 days</option>
+    <option value="30d" {{ "selected" if date_f == "30d" }}>Last 30 days</option>
+  </select>
+  {% if q or result_f or date_f %}<a class="small" href="{{ url_for('admin_scans') }}">Clear filters</a>{% endif %}
+</form>
+<div class="card tablecard">
+  <table class="logs">
+    <thead><tr><th>File name</th><th>User</th><th>Result</th><th>Confidence</th><th>VirusTotal</th><th>Date</th></tr></thead>
+    <tbody>
+    {% for s in scans.items %}
+      {% set colour = "var(--red)" if s.ml_result == "Malware" else "var(--green)" %}
+      {% set u = users.get(s.user_id) %}
+      <tr>
+        <td title="SHA-256: {{ s.file_hash }}">{% if s.details %}<a href="{{ url_for('admin_scan_view', scan_id=s.scan_id) }}">{{ s.filename }}</a>{% else %}{{ s.filename }}{% endif %}
+          <div class="small">{{ s.package_name or "" }}</div></td>
+        <td>{{ u.username if u else "Guest" }}</td>
+        <td><span class="pill-result {{ s.ml_result }}">{{ s.ml_result }}</span></td>
+        <td><div class="minibar"><span style="width:{{ s.confidence|round|int }}%; background:{{ colour }}"></span></div>
+            <span class="small">{{ s.confidence|round|int }}%</span></td>
+        <td>{{ s.vt_result or "-" }}</td>
+        <td>{{ s.scanned_at.strftime("%d %b %Y") }}<div class="small">{{ s.scanned_at.strftime("%H:%M") }}</div></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="empty">No scans match these filters.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if scans.pages > 1 %}
+  <div class="pager arrows">
+    {% if scans.has_prev %}<a class="pager-arrow" href="{{ url_for('admin_scans', page=scans.prev_num, q=q, result=result_f, date=date_f) }}" title="Previous page" aria-label="Previous page">&#8249;</a>
+    {% else %}<span class="pager-arrow off" aria-hidden="true">&#8249;</span>{% endif %}
+    <span class="small">Page {{ scans.page }} of {{ scans.pages }}</span>
+    {% if scans.has_next %}<a class="pager-arrow" href="{{ url_for('admin_scans', page=scans.next_num, q=q, result=result_f, date=date_f) }}" title="Next page" aria-label="Next page">&#8250;</a>
+    {% else %}<span class="pager-arrow off" aria-hidden="true">&#8250;</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy - MalSense{% endblock %}
+{% block content %}
+<div class="wrap legal">
+  <a class="back" href="{{ url_for('home') }}">&larr; Back to home</a>
+  <span class="chip"><i></i>Your data &middot; PDPA principles</span>
+  <h1 class="legal-title">Privacy Policy</h1>
+  <p class="legal-updated">Last updated: {{ LEGAL_UPDATED }} &middot; <a href="{{ url_for('terms') }}">Terms of Use</a></p>
+
+  <div class="legal-summary card">
+    <h4>In short</h4>
+    <ul>
+      <li><b>Your APK is deleted right after the scan.</b> MalSense never installs or runs it. Your original file stays on your device.</li>
+      <li><b>VirusTotal only receives the file's fingerprint (SHA-256 hash)</b> &ndash; never the file itself.</li>
+      <li><b>We keep only what the website needs:</b> your name, email, a scrambled (hashed) password, and the results of your scans.</li>
+      <li><b>No advertising, no tracking, and we never sell your data.</b></li>
+    </ul>
+  </div>
+
+  <section class="legal-sec">
+    <h2>1. Who we are</h2>
+    <p>MalSense is a final-year project at Universiti Sains Islam Malaysia (USIM): an explainable AI-powered Android malware
+      scanner and security-awareness platform for <b>educational use</b>. This policy explains what personal data MalSense
+      collects and why. MalSense is an educational project, and this policy is written following the principles of Malaysia's
+      <b>Personal Data Protection Act 2010 (PDPA), as amended in 2024</b>: telling you what is collected and why, keeping it secure,
+      and giving you access to it, correction of it, and the right to withdraw your consent.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>2. What we collect</h2>
+    <table class="info legal-table">
+      <tr><td>Account details</td><td>Your name and email address. Your password is stored only as a <b>bcrypt hash</b> &ndash;
+        nobody, including the administrator, can read it.</td></tr>
+      <tr><td>Google sign-in</td><td>If you use &ldquo;Continue with Google&rdquo;, Google shares only your <b>name and email address</b>.
+        MalSense never sees your Google password.</td></tr>
+      <tr><td>Scan results</td><td>For each scan: file name, file size, hashes (SHA-256, SHA-1, MD5), app name and package, minimum
+        Android version, the permissions it requests, the AI verdict and explanation, the VirusTotal result, and the date.
+        Guest scans are saved <b>without</b> any account.</td></tr>
+      <tr><td>Reported APKs</td><td>If you report an APK, the file is kept in a locked (quarantined) folder together with your
+        reason, optional message and optional contact email.</td></tr>
+      <tr><td>Account activity</td><td>When you registered and last logged in.</td></tr>
+      <tr><td>Cookies</td><td>One session cookie to keep you logged in (a longer-lasting one only if you tick &ldquo;Remember me&rdquo;),
+        and a browser setting that remembers your light/dark theme choice. No advertising or analytics cookies.</td></tr>
+    </table>
+  </section>
+
+  <section class="legal-sec">
+    <h2>3. What happens to an uploaded APK</h2>
+    <ul>
+      <li>MalSense saves a <b>temporary copy</b> under a random name, reads it (static analysis only &ndash; it is never installed
+        or run), and <b>deletes the copy as soon as the scan finishes</b>.</li>
+      <li>Only <b>reported</b> APKs are kept, so the administrator can check them and, if suitable, add them to the training data
+        that keeps the AI model up to date.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>4. Why we use your data</h2>
+    <ul>
+      <li>To scan your file and show the result, explanation and advice.</li>
+      <li>To keep your scan history and let you download reports (registered users).</li>
+      <li>To verify your email address and help you reset a forgotten password.</li>
+      <li>To keep the service secure, and to improve the AI model with reported APKs.</li>
+      <li>To produce anonymous statistics and threat-intelligence indicators (file hashes of detected malware) &ndash;
+        these do not include your name or email.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>5. Services we share data with</h2>
+    <table class="info legal-table">
+      <tr><td>VirusTotal</td><td>Only the file's <b>SHA-256 hash</b>, to check it against antivirus engines. The file is never uploaded.</td></tr>
+      <tr><td>Google Gemini (AI quiz)</td><td>The app's name, its AI verdict, and the names of the permissions it requests, to write quiz
+        questions. <b>No personal data</b> is sent.</td></tr>
+      <tr><td>Google sign-in</td><td>Only if you choose it &ndash; Google confirms who you are and shares your name and email.</td></tr>
+      <tr><td>Gmail (email)</td><td>To send your verification and password-reset emails.</td></tr>
+    </table>
+    <p>We do not sell, rent or share your personal data with anyone else, and there are no advertisers.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>6. How we protect it</h2>
+    <ul>
+      <li>Passwords hashed with bcrypt; email links that expire; protection against forged forms (CSRF).</li>
+      <li>Users can only see their own scans; only the administrator can see all scan logs.</li>
+      <li>Uploaded files are stored under random names and deleted after scanning; reported files are quarantined.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>7. How long we keep it</h2>
+    <ul>
+      <li>Your account and scan history are kept until you ask us to delete them.</li>
+      <li>If an account is deleted, its scan results are kept only as anonymous records (no longer linked to you).</li>
+      <li>Reported APKs are kept while they are useful for checking and training the model.</li>
+    </ul>
+  </section>
+
+  <section class="legal-sec">
+    <h2>8. Your rights</h2>
+    <p>In line with the PDPA, you may ask to <b>see</b> or <b>correct</b> your personal data, or <b>withdraw your consent</b>
+      (which closes your account). You may also ask us to <b>delete</b> your account and personal data, and we will do so on request. You can always use MalSense as a guest without giving any personal data. To make a request, use the
+      <a href="{{ url_for('feedback', topic='privacy') }}">Feedback form</a>.</p>
+  </section>
+
+  <section class="legal-sec">
+    <h2>9. Contact</h2>
+    <p>Questions or requests about your data (to see, correct or delete it): please use the
+      <a href="{{ url_for('feedback', topic='privacy') }}">Feedback form</a> and choose
+      &ldquo;My data / privacy request&rdquo;. We reply to the email address you give there.</p>
+    <p class="small">We may update this policy as MalSense changes; the date at the top shows the latest version.</p>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "admin_base.html" %}
+{% block title %}Edit user - MalSense Admin{% endblock %}
+{% block admin %}
+<a class="back" href="{{ url_for('admin_users') }}">&larr; Back to users</a>
+<h2 class="pagetitle" style="margin-top:12px">{{ user.username }}</h2>
+<div class="card" style="max-width:620px">
+  <table class="info">
+    <tr><td>Email</td><td>{{ user.email }}</td></tr>
+    <tr><td>Role</td><td>{{ "Admin" if user.is_admin else "User" }}</td></tr>
+    <tr><td>Status</td><td>{{ "Active" if user.is_active else "Inactive (cannot log in)" }}</td></tr>
+    <tr><td>Email verified</td><td>{{ "Yes" if user.verified else "No (has not clicked the email link)" }}</td></tr>
+    <tr><td>Scans</td><td>{{ n_scans }}</td></tr>
+    <tr><td>Joined</td><td>{{ user.created_at.strftime("%d %B %Y, %H:%M") }}</td></tr>
+    <tr><td>Last login</td><td>{{ user.last_login.strftime("%d %B %Y, %H:%M") if user.last_login else "never" }}</td></tr>
+  </table>
+</div>
+{% if is_self %}
+  <p class="small">This is your own account. You cannot deactivate, delete or demote it.</p>
+{% else %}
+<div class="actions" style="flex-wrap:wrap">
+  {% macro act(name, label, cls="btn-dark", confirm=None) %}
+  <form method="post" style="margin:0" {% if confirm %}onsubmit="return confirm('{{ confirm }}')"{% endif %}>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="{{ cls }}" name="action" value="{{ name }}">{{ label }}</button>
+  </form>
+  {% endmacro %}
+  {{ act("deactivate", "Deactivate account") if user.is_active else act("activate", "Activate account") }}
+  {% if not user.verified %}{{ act("verify", "Mark email as verified") }}{% endif %}
+  {{ act("make_user", "Change role to User") if user.is_admin else act("make_admin", "Make admin", confirm="Give this user full admin rights?") }}
+  {{ act("delete", "Delete account", "btn-danger", "Delete this account permanently? Their scan logs will be kept as guest scans.") }}
+</div>
+{% endif %}
+{% endblock %}

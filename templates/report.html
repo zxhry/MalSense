@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Report an APK - MalSense{% endblock %}
+{% block content %}
+<div class="wrap reportform">
+  <a class="back" href="{{ url_for('home') }}">&larr; Back to home</a>
+  <h2 class="pagetitle" style="margin:14px 0 6px">Report an APK</h2>
+  <p class="lead">New malware appears every day, and some apps use formats or protections MalSense cannot read yet.
+    The APK will be send to the MalSense admin: it will be checked and, if suitable, added to the training data so
+    MalSense stays up to date.</p>
+
+  <form class="card" method="post" enctype="multipart/form-data" id="reportform">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="reason">Why are you reporting it?</label>
+    <select id="reason" name="reason">
+      {% for key, text in reasons.items() %}<option value="{{ key }}" {{ "selected" if form.reason == key }}>{{ text }}</option>{% endfor %}
+    </select>
+
+    <label>APK file</label>
+    <div class="filebox uploader" id="rbox">
+      <input type="file" name="apk" accept=".apk" hidden>
+      <div class="chosen"><span class="fname"></span> <button type="button" class="clear" title="Remove file">&#x2297;</button></div>
+      <button type="button" class="btn-white mainbtn">Choose file</button>
+      <div class="dropnote">or drag &amp; drop an .apk file here &middot; max 100 MB<br></div>
+    </div>
+
+    <label for="message">Details (optional)</label>
+    <textarea id="message" name="message" rows="4" maxlength="2000"
+      placeholder="e.g. where you got the app, what it did, which result you expected">{{ form.message }}</textarea>
+
+
+    <div class="small" style="margin-top:16px">&#9888; Do not install a suspicious app on your phone. The file is stored
+      safely on the server and only opened by the admin for analysis.</div>
+    <p class="small consent">Reported APKs are kept in quarantine for the admin to check and may be used to retrain the AI model.
+      See the <a href="{{ url_for('privacy') }}" target="_blank">Privacy Policy</a>.</p>
+    <div class="submitrow"><button class="btn-next" id="sendbtn" type="submit">Send report</button></div>
+  </form>
+</div>
+
+<script>
+  const box = document.getElementById("rbox"), input = box.querySelector("input[type=file]");
+  const btn = box.querySelector(".mainbtn"), chosen = box.querySelector(".chosen"), fname = box.querySelector(".fname");
+  btn.addEventListener("click", () => input.click());
+  input.addEventListener("change", () => {
+    if (!input.files.length) return;
+    fname.textContent = input.files[0].name; chosen.style.display = "block"; btn.textContent = "Choose another file";
+  });
+  box.querySelector(".clear").addEventListener("click", () => { input.value = ""; chosen.style.display = "none"; btn.textContent = "Choose file"; });
+  ["dragenter", "dragover"].forEach(ev => box.addEventListener(ev, e => { e.preventDefault(); box.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(ev => box.addEventListener(ev, e => { e.preventDefault(); box.classList.remove("drag"); }));
+  box.addEventListener("drop", e => {
+    const f = e.dataTransfer.files[0];
+    if (!f || !f.name.toLowerCase().endsWith(".apk")) return;
+    input.files = e.dataTransfer.files; input.dispatchEvent(new Event("change"));
+  });
+  document.getElementById("reportform").addEventListener("submit", e => {
+    if (!input.files.length) { e.preventDefault(); alert("Please choose the APK file first."); return; }
+    const s = document.getElementById("sendbtn"); s.disabled = true; s.textContent = "Sending...";
+  });
+</script>
+{% endblock %}

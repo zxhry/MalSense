@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Feedback - MalSense{% endblock %}
+{% block content %}
+<div class="wrap legal feedbackpage">
+  <a class="back" href="{{ url_for('home') }}">&larr; Back to home</a>
+  <span class="chip"><i></i>We read every message</span>
+  <h1 class="legal-title">Feedback</h1>
+  <p class="legal-updated">Questions, complaints, problems, ideas, or a request about your data &ndash; send them here and
+    we will reply to your email.</p>
+
+  {% if sent %}
+  <div class="card legal-summary sentbox">
+    <h4>Message sent</h4>
+    <p>Thank you! Your message has reached the MalSense team. We will reply to the email address you gave.</p>
+    <p><a class="btn-dark" href="{{ url_for('home') }}">Back to home</a>
+       <a class="btn-dark" href="{{ url_for('feedback') }}">Send another message</a></p>
+  </div>
+  {% else %}
+  <form class="card reportform fbform" method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {# trap for spam bots: hidden from people, bots fill it in #}
+    <div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+    <label for="fb-topic">What is it about?</label>
+    <select id="fb-topic" name="topic">
+      {% for value, label in topics %}<option value="{{ value }}" {{ "selected" if form.topic == value }}>{{ label }}</option>{% endfor %}
+    </select>
+
+    <div class="fbrow">
+      <div>
+        <label for="fb-name">Your name <span class="lblhint">(optional)</span></label>
+        <input id="fb-name" name="name" type="text" maxlength="100" value="{{ form.name }}" autocomplete="name">
+      </div>
+      <div>
+        <label for="fb-email">Your email <span class="lblhint">(so we can reply)</span></label>
+        <input id="fb-email" name="email" type="email" maxlength="255" value="{{ form.email }}" autocomplete="email" required>
+      </div>
+    </div>
+
+    <label for="fb-message">Message</label>
+    <textarea id="fb-message" name="message" rows="7" maxlength="{{ max_len }}" required
+              placeholder="Tell us what happened or what you would like to know. For a scan, the file name helps us find it.">{{ form.message }}</textarea>
+    <div class="small fbcount"><span id="fb-left">{{ max_len - form.message|length }}</span> characters left</div>
+
+    <p class="small consent">Your message and email are only used to answer you. See the
+      <a href="{{ url_for('privacy') }}" target="_blank">Privacy Policy</a>.</p>
+    <div class="submitrow"><button class="btn-next" type="submit">Send message</button></div>
+  </form>
+  <script>
+    (function () {   // live "characters left" counter
+      var t = document.getElementById("fb-message"), left = document.getElementById("fb-left");
+      t.addEventListener("input", function () { left.textContent = {{ max_len }} - t.value.length; });
+    })();
+  </script>
+  {% endif %}
+</div>
+{% endblock %}

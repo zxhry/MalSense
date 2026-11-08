@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  {# apply the saved theme (light by default) before anything is drawn, so the page never flashes #}
+  <script>(function(){var t;try{t=localStorage.getItem("ms-theme")}catch(e){}document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MalSense{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {# Cyber theme (neon styles + offline fonts). Delete this line to return to the original look. #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='cyber.css') }}">
+  {# Readable fonts + light theme (the neon design above is the dark theme). #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}?v=25">
+  {# Loading screen (breathing logo). Delete this line and the loader.js line to remove it. #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='loader.css') }}">
+</head>
+<body>
+  <div id="ms-loader" class="ms-loader is-on" role="status" aria-live="polite">
+    <img src="{{ url_for('static', filename='img/MalSenseLogo.png') }}" alt="MalSense">
+    <span class="ms-loader-text">Loading</span>
+  </div>
+  <canvas id="cyber-bg" aria-hidden="true"></canvas>
+  {% block nav %}
+  <nav class="top">
+    <a class="brand" href="{{ url_for('home') }}"><img src="{{ url_for('static', filename='img/MalSenseLogo.png') }}" alt="MalSense"></a>
+    <div class="links">
+      {% include "_themebtn.html" %}
+      {% block navlinks %}
+      {% if current_user.is_authenticated %}
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+        <a class="navlink" href="{{ url_for('history') }}">My History</a>
+        {% if current_user.is_admin %}<a class="navlink" href="{{ url_for('admin_users') }}">Admin</a>{% endif %}
+        <span class="navuser">&#128100; {{ current_user.username.split()[0] }}</span>
+        <form action="{{ url_for('logout') }}" method="post" style="margin:0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="iconbtn" title="Log out" aria-label="Log out">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/><path d="M10 12h11"/><path d="M18 8.5l3.5 3.5-3.5 3.5"/></svg>
+          </button>
+        </form>
+      {% elif request.endpoint in ('login', 'register') %}
+        <a class="navlink" href="{{ url_for('home') }}">Home</a>
+      {% else %}
+        <a class="pill" href="{{ url_for('login') }}">Login</a>
+        <a class="pill solid" href="{{ url_for('register') }}">Register</a>
+      {% endif %}
+      {% endblock %}
+    </div>
+  </nav>
+  {% endblock %}
+  {% with msgs = get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="toasts">{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+  {% block content %}{% endblock %}
+  {% block footer %}
+  <footer class="sitefoot">
+    <span>&copy; 2026 MalSense &middot; Final Year Project, Universiti Sains Islam Malaysia</span>
+    <nav><a href="{{ url_for('feedback') }}">Feedback</a><a href="{{ url_for('terms') }}">Terms of Use</a><a href="{{ url_for('privacy') }}">Privacy Policy</a></nav>
+  </footer>
+  {% endblock %}
+  <script>
+    // Messages at the top of the page fade away after 5 seconds
+    setTimeout(() => document.querySelectorAll(".flash").forEach(el => {
+      el.classList.add("fade");
+      setTimeout(() => { const box = el.parentElement; el.remove();
+                         if (box && !box.children.length) box.remove(); }, 600);   // no empty gap left behind
+    }), 5000);
+  </script>
+  <script src="{{ url_for('static', filename='cyber-bg.js') }}"></script>
+  <script src="{{ url_for('static', filename='loader.js') }}"></script>
+  <script src="{{ url_for('static', filename='theme.js') }}?v=4"></script>
+</body>
+</html>
