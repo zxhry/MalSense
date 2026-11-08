@@ -1,3 +1,5 @@
+![MalSense homepage](docs/screenshots/home.png)
+
 # MalSense
 
 **An explainable AI-powered Android malware scanner and cybersecurity awareness.**
@@ -7,10 +9,6 @@ MalSense checks an Android app (APK file), tells you whether it is **benign or m
 Final Year Project, Bachelor of Computer Science (Hons.) Information Security and Assurance, Universiti Sains Islam Malaysia (USIM).
 
 > **Live demo:** https://malsense.onrender.com (access during the user-testing phase is by invitation; demo access on request)
-> **Demo video:** _add link_
-
-<!-- Screenshots: add images to docs/screenshots/ and link them here, e.g.
-![Scan result](docs/screenshots/result.png) -->
 
 ---
 
