@@ -5,7 +5,9 @@
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const COLORS = ["255,47,214", "29,233,255"];          // pink, cyan
+  const DARK = ["255,47,214", "29,233,255"];            // pink, cyan (dark theme)
+  const LIGHT = ["192,38,211", "14,116,144"];           // magenta, teal ink (light theme)
+  const isLight = () => document.documentElement.getAttribute("data-theme") === "light";
   const LINK = 120;                                     // max distance (px) for a connecting line
   let w, h, dots = [];
 
@@ -19,26 +21,28 @@
     dots = Array.from({ length: n }, () => ({
       x: Math.random() * w, y: Math.random() * h,
       vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
-      r: Math.random() * 1.4 + .8, c: COLORS[Math.random() < .5 ? 0 : 1]
+      r: Math.random() * 1.4 + .8, k: Math.random() < .5 ? 0 : 1
     }));
   }
 
   function draw() {
     ctx.clearRect(0, 0, w, h);
+    const light = isLight(), PAL = light ? LIGHT : DARK, lineA = light ? .16 : .22;
+    for (const p of dots) p.c = PAL[p.k];
     for (let i = 0; i < dots.length; i++) {
       const a = dots[i];
       for (let j = i + 1; j < dots.length; j++) {
         const b = dots[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
         if (d < LINK) {
-          ctx.strokeStyle = `rgba(${a.c},${(1 - d / LINK) * .22})`;
+          ctx.strokeStyle = `rgba(${a.c},${(1 - d / LINK) * lineA})`;
           ctx.lineWidth = .6;
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         }
       }
     }
     for (const p of dots) {
-      ctx.fillStyle = `rgba(${p.c},.85)`;
-      ctx.shadowColor = `rgba(${p.c},.9)`; ctx.shadowBlur = 6;
+      ctx.fillStyle = `rgba(${p.c},${light ? .5 : .85})`;
+      ctx.shadowColor = `rgba(${p.c},.9)`; ctx.shadowBlur = light ? 0 : 6;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
       ctx.shadowBlur = 0;
       if (!still) {

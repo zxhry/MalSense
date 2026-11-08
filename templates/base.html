@@ -10,7 +10,9 @@
   {# Cyber theme (neon styles + offline fonts). Delete this line to return to the original look. #}
   <link rel="stylesheet" href="{{ url_for('static', filename='cyber.css') }}">
   {# Readable fonts + light theme (the neon design above is the dark theme). #}
-  <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}?v=25">
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}?v=27">
+  {# "Threat Lab" redesign - loaded last so it overrides the styles above. Delete this line for the old look. #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='lab.css') }}?v=16">
   {# Loading screen (breathing logo). Delete this line and the loader.js line to remove it. #}
   <link rel="stylesheet" href="{{ url_for('static', filename='loader.css') }}">
 </head>
@@ -63,7 +65,7 @@
                          if (box && !box.children.length) box.remove(); }, 600);   // no empty gap left behind
     }), 5000);
   </script>
-  <script src="{{ url_for('static', filename='cyber-bg.js') }}"></script>
+  <script src="{{ url_for('static', filename='cyber-bg.js') }}?v=2"></script>
   <script src="{{ url_for('static', filename='loader.js') }}"></script>
   <script src="{{ url_for('static', filename='theme.js') }}?v=4"></script>
 </body>

@@ -1,21 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Awareness quiz - MalSense{% endblock %}
 {% block content %}
-<div class="wrap quiz">
-  <div class="quiz-top">
-    <a class="back" href="{{ back }}">&larr; Back to home</a>
-    <h1 class="quiz-title">Security awareness quiz based on <b title="{{ filename }}">{{ filename|shortname }}</b></h1>
-    {% if quiz.app %}
-    <div class="appfacts">
-      <span class="{{ quiz.app.verdict }}">Model verdict: {{ "Malware" if quiz.app.verdict == "MALWARE" else "Benign" }}</span>
+<div class="wrap quiz lq">
+  <a class="back" href="{{ back }}">&larr; Back to home</a>
+
+  {# header: centred title + app facts #}
+  <header class="lq-head">
+    <span class="lq-label">Awareness quiz</span>
+    <h1 class="lq-title">Quiz on <b title="{{ filename }}">{{ filename|shortname }}</b></h1>
+    <div class="lq-chips">
+      {% if quiz.app %}
+      <span class="{{ quiz.app.verdict }}">{{ "Malware" if quiz.app.verdict == "MALWARE" else "Benign" }}</span>
       <span>{{ quiz.app.dangerous_permissions|length }} dangerous permission{{ "" if quiz.app.dangerous_permissions|length == 1 else "s" }}</span>
+      {% endif %}
+      <span>{{ "AI-generated" if quiz.ai else "Question bank" }}</span>
     </div>
-    {% endif %}
-    <div class="progress"><span id="plabel">Question 1 of {{ quiz.questions|length }}</span>
-      <div class="pbar"><span id="pfill"></span></div></div>
+  </header>
+
+  {# progress: question counter, XP, one segment per question #}
+  <div class="lq-progress">
+    <div class="lq-progress-top"><span id="plabel">Question 1 of {{ quiz.questions|length }}</span><b id="xp">0 XP</b></div>
+    <div class="lq-seg" id="seg"></div>
   </div>
 
-  <div id="qbox">
+  <div id="qbox" class="lq-card">
     <div class="qcat" id="qcat"></div>
     <div class="qtext" id="qtext"></div>
     <div id="options"></div>
@@ -23,12 +31,18 @@
     <div class="qnav"><button id="next" class="btn-next" disabled>Next question &rarr;</button></div>
   </div>
 
-  <div id="scorebox" class="score" hidden>
+  <div id="scorebox" class="lq-card lq-score" hidden>
+    <svg class="lq-ring" viewBox="0 0 140 140" role="img" aria-label="Your score">
+      <circle class="track" cx="70" cy="70" r="58"/>
+      <circle class="val" id="sring" cx="70" cy="70" r="58"/>
+      <text id="sfrac" x="70" y="72" text-anchor="middle">0/0</text>
+      <text id="spct" class="pct" x="70" y="94" text-anchor="middle">0%</text>
+    </svg>
     <h2 id="smsg"></h2>
-    <div class="sbig" id="sfrac"></div>
-    <div class="spct" id="spct"></div>
+    <p class="lq-earned">You earned <b id="sxp">0 XP</b> in this quiz.</p>
     <div class="scorebtns">
       <button class="btn-next" type="button" onclick="start()">Retry quiz</button>
+      <a class="btn-dark" href="{{ back }}">Back to home</a>
     </div>
   </div>
 
@@ -41,14 +55,21 @@
   const Q = JSON.parse(document.getElementById("quizdata").textContent);
   let i = 0, score = 0;
   const $ = id => document.getElementById(id);
+  const XP = 20;                                       // XP per correct answer (quiz only)
+  $("seg").innerHTML = Q.map(() => "<i></i>").join("");  // one progress segment per question
+  function paintSeg() { [...$("seg").children].forEach((d, k) => d.className = k < i ? (d.dataset.r || "") : k === i ? "cur" : ""); }
 
-  function start() { i = 0; score = 0; $("qbox").hidden = false; $("scorebox").hidden = true; show(); }
+  function start() {
+    i = 0; score = 0; $("xp").textContent = "0 XP";
+    [...$("seg").children].forEach(d => delete d.dataset.r);
+    $("qbox").hidden = false; $("scorebox").hidden = true; show();
+  }
 
   function show() {                                   // Figure 5.7 - unanswered question
     const q = Q[i];
     $("plabel").textContent = `Question ${i + 1} of ${Q.length}`;
-    $("pfill").style.width = `${((i + 1) / Q.length) * 100}%`;
-    $("qcat").textContent = `QUESTION ${i + 1} - ${q.category}`;
+    paintSeg();
+    $("qcat").textContent = `Question ${i + 1} \u00b7 ${q.category}`;
     $("qtext").textContent = q.question;
     $("feedback").hidden = true;
     $("next").disabled = true;
@@ -71,10 +92,13 @@
     buttons[q.answer].classList.add("right");
     const ok = j === q.answer;
     if (ok) score++; else buttons[j].classList.add("wrong");
+    $("seg").children[i].dataset.r = ok ? "ok" : "bad";
+    $("seg").children[i].className = ok ? "ok" : "bad";
+    $("xp").textContent = score * XP + " XP";
     const fb = $("feedback");
     fb.className = "feedback " + (ok ? "ok" : "bad");
     fb.innerHTML = "";
-    const head = document.createElement("div"); head.className = "fbhead"; head.textContent = ok ? "CORRECT!" : "Not quite.";
+    const head = document.createElement("div"); head.className = "fbhead"; head.textContent = ok ? `Correct! +${XP} XP` : "Not quite.";
     const body = document.createElement("div"); body.textContent = q.explanation;
     fb.append(head, body); fb.hidden = false;
     $("next").disabled = false;
@@ -84,11 +108,14 @@
 
   function finish() {                                 // Figure 5.10 - score page
     $("qbox").hidden = true; $("scorebox").hidden = false;
-    $("plabel").textContent = "Completed"; $("pfill").style.width = "100%";
+    $("plabel").textContent = "Completed"; i = Q.length; paintSeg();
     const pct = Math.round(score / Q.length * 100);
     $("smsg").textContent = pct === 100 ? "Excellent!" : pct >= 60 ? "Good effort!" : "Keep learning!";
     $("sfrac").textContent = `${score}/${Q.length}`;
     $("spct").textContent = `${pct}%`;
+    $("sxp").textContent = score * XP + " XP";
+    const ring = $("sring"); ring.style.strokeDashoffset = 364;      // animate the score ring
+    requestAnimationFrame(() => requestAnimationFrame(() => { ring.style.strokeDashoffset = Math.round(364 * (1 - score / Q.length)); }));
   }
   start();
 </script>

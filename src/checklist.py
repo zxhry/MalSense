@@ -1,25 +1,26 @@
 """
 Content of the Mobile Security Checklist page (linked from the home page).
-Six groups of good security habits for Android users.
+Six groups of good security habits for Android users, shown as missions.
+Each section is a mission; each item is an objective worth 10 XP (see templates/checklist.html).
 Adapted (rewritten, not copied) from the "Mobile Security Checklist" poster by Sandbox Security
 (https://sandboxsecurity.ai) - the page credits them at the top and bottom. Edit the text here - the page layout is in
 templates/checklist.html. Each item: (short title, explanation).
 """
 
 SECTIONS = [
-    {"title": "Keep Up To Date", "icon": "update", "items": [
+    {"title": "Keep Up To Date", "icon": "update", "brief": "Patch the holes before attackers find them.", "items": [
         ("Update Android", "Turn on automatic system updates. Each update fixes security holes that malware "
                            "can use to take over your phone."),
         ("Update your apps", "Turn on automatic app updates in the Play Store. Old app versions often have "
                              "known weaknesses that attackers already know how to exploit."),
     ]},
-    {"title": "Use Strong Authentication", "icon": "lock", "items": [
+    {"title": "Use Strong Authentication", "icon": "lock", "brief": "Make sure only you can get into your phone and accounts.", "items": [
         ("Lock your phone", "Use a strong PIN or password together with your fingerprint or face unlock, so "
                             "nobody can open your phone if it is lost or borrowed."),
         ("Turn on two-factor authentication (2FA)", "Enable 2FA for email, social media and banking. Even if "
                             "someone steals your password, they still cannot log in without the second code."),
     ]},
-    {"title": "Practise Good App Security", "icon": "apps", "items": [
+    {"title": "Practise Good App Security", "icon": "apps", "brief": "Check every app before it joins your crew.", "items": [
         ("Install from official stores only", "Use Google Play. Keep 'Install unknown apps' switched off, and "
                             "never install APK files sent through WhatsApp, Telegram or SMS links."),
         ("Scan doubtful APKs first", "If you really must use an APK file, analyse it with MalSense before "
@@ -33,13 +34,13 @@ SECTIONS = [
         ("Allow location only while using the app", "Choose 'Only while using the app' instead of 'Allow all "
                             "the time', so your location cannot be tracked in the background."),
     ]},
-    {"title": "Protect Network Connections", "icon": "wifi", "items": [
+    {"title": "Protect Network Connections", "icon": "wifi", "brief": "Close the doors you are not using.", "items": [
         ("Switch off what you are not using", "Turn off Bluetooth, NFC, Wi-Fi and GPS when you do not need "
                             "them. Every open connection is another possible point of attack."),
         ("Be careful with public Wi-Fi", "Free Wi-Fi in cafes, malls and airports can be watched by attackers. "
                             "Avoid banking on it, or use mobile data or a trusted VPN."),
     ]},
-    {"title": "Protect The Device", "icon": "shield", "items": [
+    {"title": "Protect The Device", "icon": "shield", "brief": "Keep your phone guarded, even if it goes missing.", "items": [
         ("Keep Google Play Protect on", "Play Protect scans your apps for harmful behaviour. Check that it is "
                             "switched on in the Play Store settings."),
         ("Use trusted chargers and cables", "Public USB charging points and unknown cables can be used to "
@@ -47,7 +48,7 @@ SECTIONS = [
         ("Turn on Find My Device", "If your phone is lost or stolen, you can locate it, lock it, or erase all "
                             "your data remotely so nobody can misuse it."),
     ]},
-    {"title": "Beware Of Phishing And Scams", "icon": "phish", "items": [
+    {"title": "Beware Of Phishing And Scams", "icon": "phish", "brief": "Spot the trap before you take the bait.", "items": [
         ("Verify before you click", "Be careful with SMS, WhatsApp messages and emails that create panic or "
                             "promise prizes. Contact the bank or sender through their official number first. "
                             "Never share your OTP or TAC with anyone."),

@@ -2,56 +2,71 @@
 {% block title %}Digital Amanah - MalSense{% endblock %}
 {% block content %}
 {% set f = reminder %}
-<div class="wrap amanah">
+{# 8-point star (khatam) used as ornament and number badges #}
+{% macro star(cls="", size=44) %}<svg class="{{ cls }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 100 100" aria-hidden="true"><rect x="20" y="20" width="60" height="60"/><rect x="20" y="20" width="60" height="60" transform="rotate(45 50 50)"/></svg>{% endmacro %}
+{% set micons = [
+  '<path d="M4 21h16"/><path d="M6 21V11a6 6 0 0 1 12 0v10"/><path d="M12 3v2"/><path d="M10 21v-4a2 2 0 0 1 4 0v4"/>',
+  '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>',
+  '<circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20a6 6 0 0 1 12 0"/><path d="M14 20a4 4 0 0 1 8 0"/>',
+  '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>'] %}
+<div class="wrap amanah lab-am">
   <a class="back" href="{{ url_for('home') }}">&larr; Back to home</a>
 
-  <header class="am-head">
-    <span class="am-chip">Naqli &amp; Aqli &middot; Islam and cybersecurity</span>
-    <h1 class="am-title">Digital <span>Amanah</span></h1>
-    <p class="am-intro">{{ intro }}</p>
-    <nav class="am-nav" aria-label="On this page">
-      <a href="#reminders">Islamic reminder</a>
+  <header class="lam-hero">
+    <div class="lam-pattern" aria-hidden="true"></div>
+    <span class="chip"><i></i>Naqli &amp; Aqli &middot; Islam and cybersecurity</span>
+    <h1 class="lab-title">Digital <span>Amanah</span></h1>
+    <p class="lab-lead">{{ intro }}</p>
+    <nav class="lam-nav" aria-label="On this page">
+      <a href="#reminders">Reminder of the day</a>
       <a href="#maqasid">Maqasid Syariah</a>
-      <a href="#advice">Digital-safety advice</a>
+      <a href="#advice">Safety habits</a>
     </nav>
   </header>
 
-  {# 1. Islamic reminder of the day (7 reminders, one for each day of the week) #}
-  <section id="reminders" class="am-section">
-    <figure class="am-featured">
-      <div class="am-kind">Reminder of the day &middot; {{ day_name }} &middot; {{ f.kind }}</div>
+  {# 1. Islamic reminder of the day (one for each day of the week) - shown inside a mihrab-shaped arch #}
+  <section id="reminders" class="lam-section">
+    <figure class="lam-arch">
+      {{ star("lam-arch-star", 54) }}
+      <div class="lam-kind">Reminder of the day &middot; {{ day_name }} &middot; {{ f.kind }}</div>
       <blockquote>&ldquo;{{ f.text }}&rdquo;</blockquote>
       <figcaption>{{ f.ref }}</figcaption>
-      <p class="am-lesson"><b>In the digital world:</b> {{ f.lesson }}</p>
+      <p class="lam-lesson"><b>In the digital world</b>{{ f.lesson }}</p>
     </figure>
   </section>
 
-  {# 2. Maqasid Syariah #}
-  <section id="maqasid" class="am-section">
-    <h2 class="am-h2">Maqasid Syariah in the digital world</h2>
-    <p class="am-sub">The objectives of Syariah protect five essentials of human life (al-daruriyyat al-khamsah).
+  {# 2. Maqasid Syariah: five essentials, each a "shield" card #}
+  <section id="maqasid" class="lam-section">
+    <span class="lab-section-label">The five essentials</span>
+    <h2 class="lam-h2">Maqasid Syariah in the digital world</h2>
+    <p class="lam-sub">The objectives of Syariah protect five essentials of human life (al-daruriyyat al-khamsah).
       Malware and scams attack every one of them &ndash; here is how, and what you can do.</p>
-    <div class="am-maqasid">
+    <div class="lam-maqasid">
       {% for m in maqasid %}
-      <article class="am-maq">
-        <div class="am-maq-head"><span class="am-num">{{ loop.index }}</span>
-          <div><h3>{{ m.name }}</h3><div class="am-meaning">{{ m.meaning }}</div></div></div>
-        <p><b>The risk:</b> {{ m.digital }}</p>
-        <p class="am-do"><b>What you can do:</b> {{ m.do }}</p>
-        {% if m.perms %}<div class="am-perms"><span>Permissions to watch:</span>
+      <article class="lam-maq">
+        <div class="lam-maq-head">
+          <span class="lam-badge">{{ star("", 52) }}<svg class="lam-ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ micons[loop.index0 % 5]|safe }}</svg></span>
+          <div><span class="lam-num">0{{ loop.index }}</span><h3>{{ m.name }}</h3><div class="lam-meaning">{{ m.meaning }}</div></div>
+        </div>
+        <div class="lam-risk"><b>The risk</b>{{ m.digital }}</div>
+        <div class="lam-do"><b>What you can do</b>{{ m.do }}</div>
+        {% if m.perms %}<div class="lam-perms"><span>Permissions to watch</span>
           {% for p in m.perms %}<code>{{ p }}</code>{% endfor %}</div>{% endif %}
       </article>
       {% endfor %}
     </div>
   </section>
 
-  {# 3. Practical digital-safety advice #}
-  <section id="advice" class="am-section">
-    <h2 class="am-h2">Practical digital-safety advice</h2>
-    <p class="am-sub">Small habits that protect the amanah of your phone, your data and your family.</p>
-    <ol class="am-advice">
+  {# 3. Practical digital-safety advice as a path of stars #}
+  <section id="advice" class="lam-section">
+    <span class="lab-section-label">Everyday habits</span>
+    <h2 class="lam-h2">Practical digital-safety advice</h2>
+    <p class="lam-sub">Small habits that protect the amanah of your phone, your data and your family.</p>
+    <ol class="lam-path">
       {% for title, text in advice %}
-      <li><b>{{ title }}</b><span>{{ text }}</span></li>
+      <li><span class="lam-step">{{ star("", 34) }}<i>{{ loop.index }}</i></span>
+        <div><b>{{ title }}</b><span>{{ text }}</span></div></li>
       {% endfor %}
     </ol>
   </section>

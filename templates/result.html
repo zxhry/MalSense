@@ -19,6 +19,8 @@
 {% set techs = attack_techniques(r.permissions or r.dangerous_permissions) %}
 {% set mt = r.malware_type %}
 {% set rcolour = {'HIGH': 'var(--red)', 'MEDIUM': 'var(--amber)', 'LOW': 'var(--green)'}[r.risk] %}
+{% set adv = advice_for(r) %}
+{% set pct = (p * 100)|round|int %}
 <div class="wrap result">
   <a class="back" href="{{ url_for('home') }}">&larr; Scan results for <b title="{{ filename }}">{{ filename|shortname }}</b></a>
   {% if current_user.is_authenticated and saved %}<span class="savednote">&#10003; Saved to <a href="{{ url_for('history') }}">My History</a></span>{% endif %}
@@ -26,6 +28,15 @@
   {# SUMMARY: the answer first, always visible #}
   <section class="card verdict summary {{ r.risk }}">
     <div class="sum-main">
+      {# Threat Lab: risk ring = the AI model's malware probability, coloured by the FINAL risk #}
+      <div class="lab-verdict">
+        <svg class="lab-ring" viewBox="0 0 112 112" role="img" aria-label="AI model malware probability {{ pct }}%">
+          <circle class="track" cx="56" cy="56" r="46"/>
+          <circle class="val" cx="56" cy="56" r="46" style="stroke:{{ rcolour }};stroke-dashoffset:{{ (289 * (1 - p))|round|int }}"/>
+          <text class="num" x="56" y="60" text-anchor="middle">{{ pct }}%</text>
+          <text class="lbl" x="56" y="76" text-anchor="middle">MALWARE</text>
+        </svg>
+        <div>
       <span class="badge {{ r.risk }}">
         {% if r.risk == "HIGH" %}&#9888; Malware detected{% elif r.risk == "MEDIUM" %}&#9888; Suspicious &ndash; be careful{% else %}&#10004; No malware detected{% endif %}
       </span>
@@ -34,9 +45,13 @@
         {% elif r.risk == "MEDIUM" %}This app might be dangerous. The two checks did not fully agree.
         {% else %}No signs of malware were found in this app.{% endif %}
       </p>
-      <button type="button" class="todo todo-toggle" aria-expanded="false" aria-controls="advice"><b>What should I do?</b> {{ r.action }}<span class="todo-more"><span class="todo-label">Show step-by-step advice</span> <i aria-hidden="true">&#9662;</i></span></button>
-      <div class="privacynote">&#128274; MalSense scanned a copy of your APK without installing it, and deleted that copy right after the scan. Your original file is still on your device.</div>
-      <div class="sum-app">{{ r.app_name or filename }} <span class="small">&middot; {{ r.package }} &middot; {{ "%.1f"|format(r.file_size / 1048576) }} MB</span></div>
+        </div>
+      </div>
+      {% if adv.perms %}
+      <div class="lab-can"><span>What this app asks to do</span>
+        <div class="lab-chips">{% for x in adv.perms %}<a href="#advice" title="{{ x.tip }}">{{ x.title }}</a>{% endfor %}</div>
+      </div>
+      {% endif %}
     </div>
     {# key facts: each one opens the tab that explains it #}
     <div class="sum-facts">
@@ -48,6 +63,12 @@
         <b style="color:{{ rcolour }}">{{ r.risk }}</b><i>rule {{ rid }} of 5</i></a>
       <a class="fact" href="#intel" data-tab="intel"><span>Malware family</span>
         <b>{{ fam[0]|title if fam[0] else "&mdash;"|safe }}</b><i>{{ techs|length }} ATT&amp;CK technique{{ "" if techs|length == 1 else "s" }}</i></a>
+    </div>
+    {# Threat Lab: advice, privacy note and app details span the full width under the verdict + facts #}
+    <div class="sum-more">
+      <button type="button" class="todo todo-toggle" aria-expanded="false" aria-controls="advice"><b>What should I do?</b> {{ r.action }}<span class="todo-more"><span class="todo-label">Show step-by-step advice</span> <i aria-hidden="true">&#9662;</i></span></button>
+      <div class="privacynote">&#128274; MalSense scanned a copy of your APK without installing it, and deleted that copy right after the scan. Your original file is still on your device.</div>
+      <div class="sum-app">{{ r.app_name or filename }} <span class="small">&middot; {{ r.package }} &middot; {{ "%.1f"|format(r.file_size / 1048576) }} MB</span></div>
     </div>
     <div class="sum-actions">
       {% if links.pdf %}
@@ -62,7 +83,6 @@
   </section>
 
   {# ADVICE: what to do next, based on the risk level and this app's permissions #}
-  {% set adv = advice_for(r) %}
   <section class="card advice {{ r.risk }}" id="advice" aria-labelledby="advice-title">
     <h4 id="advice-title">What to do next</h4>
     <div class="advice-cols{{ ' one' if not adv.installed }}">
@@ -500,5 +520,16 @@
       if (open) box.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   })();
+</script>
+<script>
+  // Threat Lab chips: open the step-by-step advice and jump to it
+  document.querySelectorAll(".lab-chips a").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var box = document.getElementById("advice"), btn = document.querySelector(".todo-toggle");
+      if (!box) return;
+      e.preventDefault();
+      if (box.hidden && btn) btn.click(); else box.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 </script>
 {% endblock %}

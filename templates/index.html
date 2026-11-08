@@ -50,14 +50,57 @@
 </a>
 {% endmacro %}
 
-<div class="home">
-  <span class="chip"><i></i>AI engine online &middot; XGBoost + VirusTotal</span>
-  <h1 class="hero-title">Mal<span>Sense</span></h1>
-  <p class="lead">An explainable AI-powered Android malware scanner and learning platform. </p>
+<div class="home lab-home">
+  {# HERO: headline + radar scanner #}
+  <section class="lab-hero">
+    <div>
+      <span class="chip"><i></i>AI engine online &middot; XGBoost + VirusTotal</span>
+      <h1 class="lab-title lab-brand">Mal<span>Sense</span></h1>
+      <p class="lab-lead">An explainable AI-powered Android malware scanner and learning platform.</p>
+      <div class="lab-actions">
+        <a class="btn-solid" href="#scan">Scan an APK</a>
+        <a class="btn-dark" href="#learn">Take a quiz</a>
+      </div>
+      {% if metrics %}
+      {# real numbers from models/scanner_metrics.json (tested on 20% of KronoDroid the model never saw) #}
+      <div class="lab-stats">
+        <div><b>{{ "%.1f"|format(metrics.accuracy * 100) }}%</b><span>detection accuracy</span></div>
+        <div><b>{{ "%.3f"|format(metrics.roc_auc) }}</b><span>ROC-AUC</span></div>
+        <div><b>{{ "{:,}".format(metrics.n_total) }}</b><span>apps in dataset</span></div>
+        <div><b>{{ metrics.n_features }}</b><span>features checked</span></div>
+      </div>
+      {% endif %}
+    </div>
 
+    <div class="lab-radar" aria-hidden="true">
+      <svg viewBox="0 0 340 340">
+        <circle class="ring" cx="170" cy="170" r="160" stroke-opacity=".2"/>
+        <circle class="ring" cx="170" cy="170" r="112" stroke-opacity=".15"/>
+        <circle class="ring" cx="170" cy="170" r="64" stroke-opacity=".12"/>
+        <line class="ring" x1="10" y1="170" x2="330" y2="170" stroke-opacity=".08"/>
+        <line class="ring" x1="170" y1="10" x2="170" y2="330" stroke-opacity=".08"/>
+        <g class="sweep"><path d="M170 170 L170 10 A160 160 0 0 1 308 90 Z"/><line x1="170" y1="170" x2="170" y2="10"/></g>
+        <circle class="blip" cx="248" cy="104" r="5" fill="var(--pink)"/>
+        <circle class="blip" style="animation-delay:.8s" cx="104" cy="236" r="4" fill="var(--cyan)"/>
+        <circle class="blip" style="animation-delay:1.5s" cx="236" cy="250" r="4" fill="var(--pink)"/>
+        <circle class="blip" style="animation-delay:2s" cx="92" cy="110" r="3.5" fill="var(--cyan)"/>
+        <circle class="core-pulse" cx="170" cy="170" r="7"/>
+        <circle class="core" cx="170" cy="170" r="7"/>
+      </svg>
+      <ol class="lab-steps">
+        <li><b>01</b> Unpack the APK</li>
+        <li><b>02</b> Read permissions &amp; APIs</li>
+        <li><b>03</b> Ask the AI model</li>
+        <li><b>04</b> Check VirusTotal</li>
+      </ol>
+    </div>
+  </section>
+
+  {# SCAN + LEARN #}
+  <span class="lab-section-label">Start here</span>
   <div class="homegrid">
-    {# Section 1: analyse an APK (result page) #}
     <section class="homecard" id="scan">
+      <span class="lab-step-tag">01 &middot; Scan</span>
       <h2 class="hc-title">Analyse an APK</h2>
       <p class="hc-text">Find out whether an app is <b>benign or malware</b>. Our AI model checks the file,
         VirusTotal's antivirus engines double-check it, and you see the reasons behind the verdict.</p>
@@ -67,8 +110,8 @@
       {% else %}{{ loginbox("Log in to analyse", "scan") }}{% endif %}
     </section>
 
-    {# Section 2: learn from an APK (AI awareness quiz) #}
     <section class="homecard learn" id="learn">
+      <span class="lab-step-tag">02 &middot; Learn</span>
       <h2 class="hc-title">Learn from an APK</h2>
       <p class="hc-text">Test your <b>cybersecurity awareness</b>. MalSense reads the app's permissions and
         behaviour, and AI writes quiz questions about the risks found in it.</p>
@@ -79,44 +122,36 @@
     </section>
   </div>
 
-  {# Mobile Security Checklist (full width) #}
-  <a class="homeband checklist" href="{{ url_for('checklist') }}">
-    <div><b>Mobile Security Checklist</b>
-      <span>16 simple habits to protect your phone &ndash; tick them off as you go and see how secure you are.</span></div>
-    <span class="btn-dark">Open checklist &rarr;</span>
-  </a>
-
-  {# Digital Amanah + Report, side by side #}
-  <div class="homebands">
-    <a class="homeband amanah" href="{{ url_for('amanah') }}">
-      <div><b>Digital Amanah</b>
-        <span>Your phone and data are a trust. Islamic reminders, Maqasid Syariah and practical tips.</span></div>
-      <span class="btn-dark">Explore &rarr;</span>
+  {# MORE: missions, amanah, report #}
+  <div class="lab-paths">
+    <a class="lab-path" href="{{ url_for('checklist') }}">
+      <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
+      <b>03 &middot; Missions</b>
+      <span>16 habits to protect your phone. Rank up from Rookie to Guardian.</span>
+      <em>Open checklist &rarr;</em>
+    </a>
+    <a class="lab-path pink" href="{{ url_for('amanah') }}">
+      <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span>
+      <b>Digital Amanah</b>
+      <span>Your phone and data are a trust. Islamic reminders, Maqasid Syariah and practical tips.</span>
+      <em>Explore &rarr;</em>
     </a>
     {% set report_url = url_for('report_apk') if current_user.is_authenticated else url_for('login', next=url_for('report_apk')) %}
-    <a class="homeband report" href="{{ report_url }}">
-      <div><b>Couldn't analyse your app, or the result looks wrong?</b>
-        <span>Send the APK to the admin so MalSense can learn from it.</span></div>
-      <span class="btn-dark">{{ "Report an APK" if current_user.is_authenticated else "Log in to report" }} &rarr;</span>
+    <a class="lab-path" href="{{ report_url }}">
+      <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4h11l-1.5 4L16 12H5"/></svg></span>
+      <b>Report an APK</b>
+      <span>Couldn't analyse your app, or the result looks wrong? Send it to the admin.</span>
+      <em>{{ "Report an APK" if current_user.is_authenticated else "Log in to report" }} &rarr;</em>
     </a>
   </div>
 
   {% if not current_user.is_authenticated %}<p class="note"><a href="{{ url_for('login') }}">Log in</a> or <a href="{{ url_for('register') }}">register</a> to analyse APKs, take quizzes, save your scan history and download reports.</p>{% endif %}
-
-  {% if metrics %}
-  {# real numbers from models/scanner_metrics.json (tested on 20% of KronoDroid the model never saw) #}
-  <div class="statstrip">
-    <div><b>{{ "%.1f"|format(metrics.accuracy * 100) }}%</b><span>Detection accuracy</span></div>
-    <div><b>{{ "%.3f"|format(metrics.roc_auc) }}</b><span>ROC-AUC score</span></div>
-    <div><b>{{ "{:,}".format(metrics.n_total) }}</b><span>Apps in dataset</span></div>
-    <div><b>{{ metrics.n_features }}</b><span>Features checked</span></div>
-  </div>
-  {% endif %}
 </div>
 
 <script>
   // Choosing (or dropping) an APK starts straight away - no second click needed
   // coming back with the browser's Back button: reset the buttons
+  window.addEventListener("pageshow", () => document.body.classList.remove("scanning"));
   window.addEventListener("pageshow", () => document.querySelectorAll(".uploader").forEach(box => {
     const btn = box.querySelector(".mainbtn");
     btn.disabled = false; btn.textContent = btn.dataset.label || btn.textContent;
@@ -132,6 +167,7 @@
       fname.textContent = input.files[0].name; chosen.style.display = "block";
       btn.disabled = true; btn.textContent = box.dataset.busy;
       document.querySelectorAll(".uploader .mainbtn").forEach(b => b.disabled = true);   // one upload at a time
+      document.body.classList.add("scanning");        // radar spins faster while uploading
       if (window.showLoader) showLoader();            // breathing-logo loading screen
       box.submit();
     });

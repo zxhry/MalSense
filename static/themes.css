@@ -597,3 +597,55 @@ html[data-theme="light"] .rtabs a.on { color: #fff; background: var(--pink); bor
 html[data-theme="light"] .rtabs em { background: rgba(14, 116, 144, .12); }
 html[data-theme="light"] .rtabs a.on em { color: #fff; background: rgba(255, 255, 255, .22); }
 html[data-theme="light"] .rtabs a.on .tcount { color: #fff; border-color: rgba(255, 255, 255, .5); }
+
+
+/* checklist as missions: agent status panel + one mission card per row (in order 1-6) */
+.msc-agent { max-width: 640px; margin-top: 6px; padding: 18px 20px; background: var(--panel); border: 1px solid var(--panel-border); }
+.msc-agent-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.msc-agent-label { display: block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.msc-rankline { font-size: 22px; font-weight: 800; color: var(--text); }
+#mscrank { color: var(--pink); }
+.msc-xp { text-align: right; }
+.msc-xp b { display: block; font-size: 26px; font-weight: 800; color: var(--text); }
+.msc-xp span { font-size: 13.5px; color: var(--muted); }
+.msc-agent .msc-bar { margin: 12px 0 6px; height: 8px; }
+.msc-agent .msc-bar span { background: var(--pink); box-shadow: 0 0 12px rgba(255, 47, 214, .5); }
+.msc-ranks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+.msc-ranks span.on { color: var(--pink); font-weight: 700; }
+.msc-agent .msc-count { margin-top: 12px; }
+#mscmsg { color: var(--cyan); font-weight: 600; }
+
+.msc-list { max-width: 860px; }
+.msc-list .msc-sec { margin: 0 0 14px; padding: 16px 20px 6px; }
+.msc-mhead { display: flex; align-items: center; gap: 14px; padding-bottom: 6px; }
+.msc-micon { flex: none; display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center;
+             color: var(--pink); border: 1px solid var(--panel-border); background: rgba(255, 47, 214, .08); }
+.msc-mtitle { flex: 1; min-width: 0; }
+.msc-mtitle h2 { margin: 0; font-size: 18px; font-weight: 700; color: var(--text); text-transform: none; letter-spacing: normal; }
+.msc-brief { margin: 2px 0 0; font-size: 14.5px; color: var(--muted); }
+.msc-mstat { flex: none; font-family: var(--mono); font-size: 12px; padding: 3px 10px; border: 1px solid var(--panel-border); color: var(--muted); }
+.msc-list .msc-item { padding: 10px 0 10px 54px; gap: 12px; position: relative; }
+.msc-list .msc-check { position: absolute; left: 14px; top: 11px; }
+.msc-text { flex: 1; min-width: 0; }
+.msc-text b { display: block; font-size: 15.5px; }
+.msc-text small { display: block; margin-top: 2px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.msc-xpt { flex: none; padding-top: 2px; font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--cyan); white-space: nowrap; }
+.msc-sec li.done .msc-text b { text-decoration: line-through; color: var(--muted); }
+.msc-sec li.done .msc-xpt { opacity: .5; }
+.msc-sec.complete { border-color: var(--cyan); }
+.msc-sec.complete .msc-micon { color: var(--cyan); background: rgba(29, 233, 255, .08); }
+.msc-sec.complete .msc-mstat { background: var(--cyan); border-color: var(--cyan); color: #00141a; }
+.msc-win { display: flex; align-items: center; gap: 10px; max-width: 860px; margin: 6px 0 14px; padding: 14px 16px;
+           border: 1px solid var(--cyan); color: var(--cyan); font-weight: 600; background: rgba(29, 233, 255, .07); }
+.msc-win[hidden] { display: none; }
+@media (max-width: 600px) {
+  .msc-list .msc-item { padding-left: 40px; flex-wrap: wrap; }
+  .msc-list .msc-check { left: 4px; }
+  .msc-xpt { width: 100%; padding-top: 0; }
+}
+html[data-theme="light"] .msc-agent { box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 6px 18px rgba(15, 23, 42, .06); }
+html[data-theme="light"] .msc-agent .msc-bar span { box-shadow: none; }
+html[data-theme="light"] .msc-micon { background: rgba(192, 38, 211, .07); }
+html[data-theme="light"] .msc-sec.complete .msc-micon { background: rgba(14, 116, 144, .07); }
+html[data-theme="light"] .msc-sec.complete .msc-mstat { color: #fff; }
+html[data-theme="light"] .msc-win { background: rgba(14, 116, 144, .06); }
