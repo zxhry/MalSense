@@ -14,7 +14,7 @@ Final Year Project, Bachelor of Computer Science (Hons.) Information Security an
 
 ## Why MalSense?
 
-Tools such as VirusTotal tell you that an APK is malicious, but not **what it does** or **why it is dangerous**, and not what to do if you have already installed it. MalSense combines a machine-learning verdict with an explanation and a lesson built from the same app.
+Tools tell you that an APK is malicious, but not **what it does** or **why it is dangerous**, and not what to do if you have already installed it. MalSense combines a machine-learning verdict with an explanation and a lesson built from the same app.
 
 ## Features
 
