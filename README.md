@@ -9,7 +9,6 @@ MalSense checks an Android app (APK file), tells you whether it is **benign or m
 Final Year Project, Bachelor of Computer Science (Hons.) Information Security and Assurance, Universiti Sains Islam Malaysia (USIM).
 
 > **Live demo:** https://malsense.onrender.com (access during the user-testing phase is by invitation; demo access on request)
-> **Demo video:** _add link_
 
 ---
 
