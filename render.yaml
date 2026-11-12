@@ -18,12 +18,10 @@ services:
         value: "3"
       - key: QUIZ_LIMIT_PER_DAY
         value: "3"
-      - key: REQUIRE_LOGIN_TO_SCAN         # testing phase: true. After testing set to false so guests can scan
+      - key: REQUIRE_LOGIN_TO_SCAN         # true = log in to scan (daily limit applies); false = guests can scan
         value: "true"
       - key: FLASK_SECRET_KEY
         generateValue: true
-      - key: SITE_ACCESS_CODE              # private testing: visitors need this code (empty = open to all)
-        sync: false
       - key: DB_HOST
         sync: false
       - key: DB_PORT

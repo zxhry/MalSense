@@ -35,9 +35,7 @@ Push the project to your own GitHub repository (it can be private). Check that `
 Google Cloud Console > Credentials > your OAuth client > Authorized redirect URIs > add
 `https://<your-app>.onrender.com/auth/google/callback`
 
-## 6. Before sending the link to friends
-- Set **SITE_ACCESS_CODE** on Render (Environment) and give the code only to your testers. Every page then
-  needs the code once per browser session. Change it to lock everyone out again; empty = open to everyone.
+## 6. Before sharing the link
 - Scan your biggest sample APK online and check it finishes (free plan has little memory).
   Intents and API calls are read from the app's code too, so a large APK is the real test.
 - The free service sleeps after 15 minutes idle; the first visit then takes about a minute.

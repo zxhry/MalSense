@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from final_verdict import full_scan, VT_CONFIRM, RULES, rule_id   # model + VirusTotal + risk level
 import malsense_scanner
 from model_info import get_model_info, retrain
-from models import db, User, Scan, Report, TesterRequest, QuizLog
+from models import db, User, Scan, Report, QuizLog
 from report import report_data, build_pdf, build_docx
 from quiz import new_quiz, load_quiz
 from malware_type import safe_malware_type             # intents + API calls found in the APK (no AI model; list from CICMalDroid)
@@ -144,113 +144,12 @@ def make_admin(email):
 
 
 # ------------------------------------------------------------------ pages
-# ------------------------------------------------------------------ Access code (private testing)
-# While MalSense is only for invited testers, set SITE_ACCESS_CODE (in .env / on Render): every page then
-# needs the code once per browser session, entered on the splash screen. Leave it empty = open to everyone.
-# Changing the code locks out everyone who used the old one.
-SITE_ACCESS_CODE = os.getenv("SITE_ACCESS_CODE", "").strip()
-GATE_OPEN = {"splash", "unlock", "static", "join", "privacy", "terms"}   # reachable without the code
-UNLOCK_TRIES = {}                                          # ip -> [wrong attempts, time of first attempt]
-UNLOCK_MAX, UNLOCK_WINDOW = 10, 15 * 60                    # 10 wrong codes -> wait 15 minutes
-
-
-def _gate_token():
-    """What the session stores after a correct code (tied to the code, never the code itself)."""
-    return hashlib.sha256(("gate:" + SITE_ACCESS_CODE).encode()).hexdigest()[:20]
-
-
-@app.before_request
-def access_gate():
-    if not SITE_ACCESS_CODE or request.endpoint in GATE_OPEN or session.get("site_ok") == _gate_token():
-        return None
-    target = request.full_path.rstrip("?") if request.method == "GET" else ""
-    return redirect(url_for("splash", next=safe_next(target) or None))
-
-
-@app.route("/unlock", methods=["POST"])
-def unlock():
-    ip = request.remote_addr or "?"
-    tries, first = UNLOCK_TRIES.get(ip, [0, time.time()])
-    if time.time() - first > UNLOCK_WINDOW:
-        tries, first = 0, time.time()
-    nxt = safe_next(request.form.get("next"))
-    if tries >= UNLOCK_MAX:
-        flash("Too many wrong codes. Please try again in 15 minutes.")
-        return redirect(url_for("splash", next=nxt or None))
-    code = request.form.get("code", "").strip()
-    if SITE_ACCESS_CODE and hmac.compare_digest(code.encode(), SITE_ACCESS_CODE.encode()):
-        UNLOCK_TRIES.pop(ip, None)
-        session["site_ok"] = _gate_token()
-        return redirect(nxt or url_for("home"))
-    UNLOCK_TRIES[ip] = [tries + 1, first]
-    time.sleep(0.5)                                        # slows down guessing
-    flash("That access code is not correct.")
-    return redirect(url_for("splash", next=nxt or None))
-
-
-# ------------------------------------------------------------------ Join as a tester (private testing)
-# Visitors without a code can ask to join. Requests appear in Admin > Testers; approving one emails the code.
-JOIN_TRIES = {}                                            # ip -> [times of recent requests]
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
-
-
-app.jinja_env.globals["BEFORE_FORM_URL"] = sec.BEFORE_FORM_URL     # Form 1 link on the Join page
-
-
-@app.route("/join", methods=["GET", "POST"])
-def join():
-    form = {"name": "", "email": "", "reason": ""}
-    errors = {}
-    if request.method == "POST":
-        form = {k: (request.form.get(k) or "").strip() for k in form}
-        form["email"] = form["email"].lower()
-        if request.form.get("website"):                    # hidden "honeypot" box - only bots fill it in
-            return render_template("join.html", done=True, form=form, errors={})
-        ip = request.remote_addr or "?"
-        recent = [t for t in JOIN_TRIES.get(ip, []) if time.time() - t < 3600]
-        if len(recent) >= 3:
-            flash("Too many requests from your network. Please try again in an hour.")
-            return render_template("join.html", form=form, errors={}, done=False)
-        if not 2 <= len(form["name"]) <= 100:
-            errors["name"] = "Please enter your name."
-        if not EMAIL_RE.match(form["email"]) or len(form["email"]) > 255:
-            errors["email"] = "Please enter a valid email address."
-        elif sec.email_problem(form["email"]):
-            errors["email"] = sec.email_problem(form["email"])
-        if len(form["reason"]) < 10:
-            errors["reason"] = "Please tell me a little more (at least 10 characters)."
-        elif len(form["reason"]) > 1000:
-            errors["reason"] = "Please keep it under 1000 characters."
-        if not request.form.get("consent"):
-            errors["consent"] = "Please read the information and tick the box to agree."
-        if not errors:
-            JOIN_TRIES[ip] = recent + [time.time()]
-            old = TesterRequest.query.filter_by(email=form["email"]).first()
-            if old and old.status == "pending":
-                flash("You have already asked to join with this email - I will reply soon.", "success")
-                return render_template("join.html", done=True, form=form, errors={})
-            if old and old.status == "approved":
-                flash("This email is already approved. Please check your inbox (and spam folder) for the access code.", "success")
-                return render_template("join.html", done=True, form=form, errors={})
-            tr = old or TesterRequest(email=form["email"])
-            tr.name, tr.reason, tr.consent_at = form["name"], form["reason"], datetime.now()
-            tr.status, tr.created_at, tr.decided_at = "pending", datetime.now(), None
-            try:
-                db.session.add(tr)
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                app.logger.error(f"Could not save tester request: {e}")
-                flash("Sorry, your request could not be saved right now. Please try again later.")
-                return render_template("join.html", form=form, errors={}, done=False)
-            return render_template("join.html", done=True, form=form, errors={})
-    return render_template("join.html", form=form, errors=errors, done=False)
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")   # stricter email check (overrides the one above)
 
 
 @app.route("/")
 def splash():                                           # Figure 5.1
-    locked = bool(SITE_ACCESS_CODE) and session.get("site_ok") != _gate_token()
-    return render_template("splash.html", locked=locked, next=safe_next(request.args.get("next")))
+    return render_template("splash.html")
 
 
 @app.route("/home")
@@ -293,14 +192,14 @@ def receive_apk(folder=UPLOAD_DIR, suffix=".apk"):
     return path, file.filename
 
 
-# ------------------------------------------------------------------ Daily limits for testers
+# ------------------------------------------------------------------ Daily limits (protect the Gemini / VirusTotal quotas)
 # Each logged-in user may scan SCAN_LIMIT_PER_DAY APKs and make QUIZ_LIMIT_PER_DAY quizzes a day (default 3 each,
 # 0 = no limit; change them in .env / Render without touching the code). The day resets at midnight Malaysia time.
 # Admins are never limited.
 SCAN_LIMIT = int(os.getenv("SCAN_LIMIT_PER_DAY", "3") or 0)
 QUIZ_LIMIT = int(os.getenv("QUIZ_LIMIT_PER_DAY", "3") or 0)
-# Testing phase: True = testers must log in to scan. After testing set REQUIRE_LOGIN_TO_SCAN=false so guests can scan
-# (the quiz always needs an account). Change it in .env / on Render without touching the code.
+# True (default) = users must log in to scan, so every scan counts toward their daily limit.
+# Set REQUIRE_LOGIN_TO_SCAN=false to let guests scan (the quiz always needs an account).
 REQUIRE_LOGIN_TO_SCAN = os.getenv("REQUIRE_LOGIN_TO_SCAN", "true").strip().lower() not in ("0", "false", "no", "off")
 app.jinja_env.globals["REQUIRE_LOGIN_TO_SCAN"] = REQUIRE_LOGIN_TO_SCAN
 MYT = timezone(timedelta(hours=8))                      # Malaysia time (no daylight saving)
@@ -336,7 +235,7 @@ def must_log_in(what, anchor):
 
 @app.route("/scan", methods=["POST"])
 def scan():                                             # Figure 5.6 - home section 1: "Scan an APK"
-    if REQUIRE_LOGIN_TO_SCAN and not current_user.is_authenticated:   # testers log in, so each scan counts toward their limit
+    if REQUIRE_LOGIN_TO_SCAN and not current_user.is_authenticated:   # logged-in users, so each scan counts toward their limit
         return must_log_in("analyse an APK", "scan")
     msg = limit_reached("scans")
     if msg:
@@ -1187,66 +1086,6 @@ def admin_intel_export(fmt):
     abort(404)
 
 
-# ------------------------------------------------------------------ Admin > Testers (join requests)
-@app.route("/admin/testers")
-@admin_required
-def admin_testers():
-    status_f = request.args.get("status", "pending")
-    q = TesterRequest.query
-    if status_f in TesterRequest.STATUSES:
-        q = q.filter_by(status=status_f)
-    counts = dict(db.session.query(TesterRequest.status, db.func.count(TesterRequest.request_id))
-                  .group_by(TesterRequest.status).all())
-    return render_template("admin_testers.html", testers=q.order_by(TesterRequest.created_at.desc()).all(),
-                           counts=counts, status_f=status_f, code_set=bool(SITE_ACCESS_CODE))
-
-
-@app.route("/admin/testers/<int:request_id>", methods=["POST"])
-@admin_required
-def admin_tester_action(request_id):
-    tr = db.session.get(TesterRequest, request_id) or abort(404)
-    action = request.form.get("action")
-    back = redirect(url_for("admin_testers", status=request.form.get("status_f", "pending")))
-    if action in ("approve", "resend"):
-        if not SITE_ACCESS_CODE:
-            flash("Set SITE_ACCESS_CODE first (in .env or on Render) - there is no code to send yet.")
-            return back
-        sent = sec.send_tester_code(tr.name, tr.email, SITE_ACCESS_CODE, url_for("splash", _external=True),
-                                    app.logger)
-        if action == "approve":
-            tr.status, tr.decided_at = "approved", datetime.now()
-        if sent:
-            tr.code_sent_at = datetime.now()
-            flash(f"{tr.name} approved - the access code was emailed to {tr.email}." if action == "approve"
-                  else f"Access code sent again to {tr.email}.", "success")
-        else:
-            flash(f"Saved, but the email to {tr.email} could not be sent. Check the mail settings, "
-                  f"or send them the code yourself.")
-    elif action == "reject":
-        tr.status, tr.decided_at = "rejected", datetime.now()
-        flash(f"Request from {tr.name} rejected (no email is sent).", "success")
-    elif action == "reopen":
-        tr.status, tr.decided_at = "pending", None
-    db.session.commit()
-    return back
-
-
-@app.route("/admin/testers.csv")
-@admin_required
-def admin_testers_csv():
-    """Tester list for the thesis (user-testing participants)."""
-    out = io.StringIO()
-    w = csv.writer(out)
-    w.writerow(["request_id", "name", "email", "reason", "status", "requested_at", "consent_at", "decided_at",
-                "code_sent_at"])
-    fmt = lambda d: d.strftime("%Y-%m-%d %H:%M") if d else ""
-    for t in TesterRequest.query.order_by(TesterRequest.created_at).all():
-        w.writerow([t.request_id, t.name, t.email, t.reason, t.status, fmt(t.created_at), fmt(t.consent_at),
-                    fmt(t.decided_at), fmt(t.code_sent_at)])
-    return send_file(io.BytesIO(out.getvalue().encode("utf-8-sig")), as_attachment=True,
-                     download_name=f"malsense_testers_{datetime.now():%Y%m%d}.csv", mimetype="text/csv")
-
-
 @app.template_filter("shortname")
 def shortname(name, keep=36):
     """Long file names (e.g. a 64-character hash.apk) are shortened in headings: start ... end.
@@ -1276,11 +1115,10 @@ def admin_counts():
     """Number of new reports, shown next to "Reports" in the admin sidebar."""
     if current_user.is_authenticated and current_user.is_admin:
         try:
-            return {"new_reports": Report.query.filter_by(status="new").count(),
-                    "new_testers": TesterRequest.query.filter_by(status="pending").count()}
+            return {"new_reports": Report.query.filter_by(status="new").count()}
         except Exception:
             db.session.rollback()
-    return {"new_reports": 0, "new_testers": 0}
+    return {"new_reports": 0}
 
 
 @app.errorhandler(403)

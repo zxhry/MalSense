@@ -41,7 +41,7 @@
 </form>
 {% endmacro %}
 
-{# Guests see this instead of an upload box: scans and quizzes need an account (daily limit per tester) #}
+{# Guests see this instead of an upload box: scans and quizzes need an account (daily limit per user) #}
 {% macro loginbox(label, anchor, icon="file") %}
 <a class="filebox loginbox" href="{{ url_for('login', next=url_for('home', _anchor=anchor)) }}">
   {% if icon == "quiz" %}{{ quizicon() }}{% else %}{{ fileicon() }}{% endif %}

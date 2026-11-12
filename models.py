@@ -83,23 +83,6 @@ class Report(db.Model):
                 "dismissed": "Dismissed"}
 
 
-class TesterRequest(db.Model):
-    """Someone asking to join MalSense's user testing (splash screen > Join as a tester).
-    The admin approves the request in Admin > Testers, which emails them the site access code."""
-    __tablename__ = "tester_requests"
-    request_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(255), nullable=False, unique=True)
-    reason = db.Column(db.Text, nullable=False)                     # why they want to join
-    consent_at = db.Column(db.DateTime, nullable=False)             # when they ticked the consent box
-    status = db.Column(db.Enum("pending", "approved", "rejected"), nullable=False, default="pending")
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    decided_at = db.Column(db.DateTime)                             # approved / rejected
-    code_sent_at = db.Column(db.DateTime)                           # last time the code was emailed
-
-    STATUSES = {"pending": "Waiting", "approved": "Approved", "rejected": "Rejected"}
-
-
 class QuizLog(db.Model):
     """One row each time a user makes an awareness quiz - used for the daily quiz limit."""
     __tablename__ = "quiz_log"

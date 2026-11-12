@@ -8,7 +8,7 @@ MalSense checks an Android app (APK file), tells you whether it is **benign or m
 
 Final Year Project, Bachelor of Computer Science (Hons.) Information Security and Assurance, Universiti Sains Islam Malaysia (USIM).
 
-> **Live demo:** https://malsense.onrender.com (access during the user-testing phase is by invitation; demo access on request)
+> **Live demo:** https://malsense.onrender.com (free hosting: the first visit can take about a minute to wake up)
 
 ---
 
@@ -34,8 +34,8 @@ Tools tell you that an APK is malicious, but not **what it does** or **why it is
 **Accounts and admin**
 - Registration with email verification, password reset, and **Sign in with Google** (OAuth 2.0 with PKCE)
 - Personal scan history
-- Admin panel: users, scan logs, ML model page, threat intelligence (IoC export), user-reported APKs, and tester management
-- Invitation-only tester flow (access code, consent, approval by email) and per-user daily limits during user testing
+- Admin panel: users, scan logs, ML model page, threat intelligence (IoC export), and user-reported APKs
+- Per-user daily limits on scans and quizzes to protect the API quotas
 - Light / dark theme, mobile-friendly layout
 
 ## Tech stack
