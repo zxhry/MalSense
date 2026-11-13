@@ -2,14 +2,14 @@
 Explainable AI demo: explain the model's decision for real apps from the KronoDroid TEST set
 (one malware, one benign) - no APK file needed, so no real malware is ever downloaded.
 Also checks that the explanation is mathematically consistent with the prediction.
-Usage: python src/explain_demo.py
+Usage: python src/training/explain_demo.py
 """
 import os, sys
 import numpy as np
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))   # src/ (explain.py)
 from explain import explain
 import xgboost as xgb
 

@@ -1,12 +1,13 @@
 """
 Diagnose a FALSE NEGATIVE: why did the AI model call an APK "safe" when VirusTotal says malware?
 Compares what the model CAN see (permissions, sizes, components) with code-level tricks it CANNOT see.
-Usage : python src/inspect_apk.py path/to/file.apk
+Usage : python src/training/inspect_apk.py path/to/file.apk
 """
 import os, sys, zipfile, re
 from loguru import logger
 logger.remove()
 from androguard.core.apk import APK
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))   # src/ (scanner, VirusTotal)
 from malsense_scanner import scan_apk
 from virustotal_check import vt_lookup
 
@@ -70,5 +71,5 @@ def main(path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        sys.exit("Usage: python src/inspect_apk.py path/to/file.apk")
+        sys.exit("Usage: python src/training/inspect_apk.py path/to/file.apk")
     main(sys.argv[1])

@@ -16,10 +16,12 @@ services:
         value: https://malsense.onrender.com
       - key: SCAN_LIMIT_PER_DAY
         value: "3"
+      - key: GUEST_SCAN_LIMIT_PER_DAY
+        value: "3"
       - key: QUIZ_LIMIT_PER_DAY
         value: "3"
-      - key: REQUIRE_LOGIN_TO_SCAN         # true = log in to scan (daily limit applies); false = guests can scan
-        value: "true"
+      - key: REQUIRE_LOGIN_TO_SCAN         # false = guests can scan (only scan); true = log in to scan
+        value: "false"
       - key: FLASK_SECRET_KEY
         generateValue: true
       - key: DB_HOST

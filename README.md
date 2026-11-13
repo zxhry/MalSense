@@ -35,7 +35,8 @@ Tools tell you that an APK is malicious, but not **what it does** or **why it is
 - Registration with email verification, password reset, and **Sign in with Google** (OAuth 2.0 with PKCE)
 - Personal scan history
 - Admin panel: users, scan logs, ML model page, threat intelligence (IoC export), and user-reported APKs
-- Per-user daily limits on scans and quizzes to protect the API quotas
+- Guests can scan APKs right away; an account unlocks the quiz, history, reports and learning pages
+- Daily limits on scans and quizzes (guests and users) to protect the API quotas
 - Light / dark theme, mobile-friendly layout
 
 ## Tech stack
@@ -65,17 +66,18 @@ APK upload
    -> Gemini turns the findings into a short awareness quiz
 ```
 
-The model was trained and evaluated on **KronoDroid**, comparing **SVM, Random Forest and XGBoost** over three train/test splits (70/30, 80/20, 90/10) on the same data. The training and evaluation scripts are in `src/` (`kd_*.py`, `train_scanner_model.py`). The datasets themselves are not included in this repository.
+The model was trained and evaluated on **KronoDroid**, comparing **SVM, Random Forest and XGBoost** over three train/test splits (70/30, 80/20, 90/10) on the same data. The training and evaluation scripts are in `src/training/` (`kd_*.py`); `src/train_scanner_model.py` builds the model the website uses. The datasets themselves are not included in this repository.
 
 ## Project structure
 
 ```
 app.py               Flask routes
 models.py            Database models (SQLAlchemy)
-src/                 Scanner, explanation, VirusTotal, quiz, reports, email, training scripts
+src/                 Scanner, explanation, VirusTotal, quiz, reports, email
+src/training/        Data preparation and model comparison scripts (thesis experiments)
 templates/  static/  Web pages, styles, fonts, images
 models/              Trained scanner model used by the web app
-database/            SQL schema and migrations (tidb_setup.sql = complete schema)
+database/            schema.sql (complete schema), tidb_setup.sql (same, for TiDB Cloud), old migrations
 docs/DEPLOY.md       Deploying to Render + TiDB Cloud
 tests/               Small connection checks (database, email, Gemini, Androguard)
 ```
@@ -89,7 +91,7 @@ tests/               Small connection checks (database, email, Gemini, Androguar
    .venv\Scripts\activate          (Windows)   |   source .venv/bin/activate   (macOS/Linux)
    pip install -r requirements.txt
    ```
-3. Create the database: run `database/tidb_setup.sql` in MySQL (it creates the `malsense` database and all tables).
+3. Create the database: run `database/schema.sql` in MySQL (it creates the `malsense` database, an app user and all tables).
 4. Copy `.env.example` to `.env` and fill it in. For a local MySQL use `DB_HOST=localhost`, `DB_PORT=3306`, `DB_SSL=false`, and `MAIL_PROVIDER=smtp` with a Gmail App Password. API keys: VirusTotal, Gemini, and (optional) a Google OAuth client.
 5. Start it:
    ```

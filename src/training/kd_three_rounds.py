@@ -15,7 +15,7 @@ evidence/kd_final_report.txt (a built-in consistency check).
 
 This script does NOT touch the models used by the website (models/*.joblib).
 
-Run from the MalSense folder:   python src/kd_three_rounds.py
+Run from the MalSense folder:   python src/training/kd_three_rounds.py
 Output: evidence/three_rounds/
 """
 import json, os, time

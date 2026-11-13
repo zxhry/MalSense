@@ -469,6 +469,36 @@
           <dt>False alarm</dt><dd>A safe app wrongly flagged as malware (false positive).</dd>
         </dl>
       </details>
+
+  {# Learn: quiz built from THIS scan (no re-upload). At the bottom, so the results are read first. #}
+  {% if scan_no %}
+  {% set qperms = (r.dangerous_permissions or [])[:2] %}
+  <section class="quizcta {{ r.risk }}" aria-labelledby="quizcta-title">
+    <div class="qi" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div>
+    <div class="qtext">
+      <h3 id="quizcta-title">Test yourself on this app</h3>
+      <p>{% if r.risk == "LOW" %}What did this app ask for, and would you have allowed it?{% else %}Would you have spotted the danger?{% endif %}
+        Take a short AI quiz built from <b>{{ (r.app_name or filename)|shortname(30) }}</b>&rsquo;s permissions and behaviour. No need to upload it again.</p>
+      <div class="qtags"><span>5 questions</span><span>About 2 minutes</span>
+        {% if qperms %}<span>{{ qperms|map("replace", "android.permission.", "")|map("replace", "_", " ")|map("title")|join(" &middot; ")|replace("Sms", "SMS")|replace("Mms", "MMS")|safe }}</span>{% endif %}</div>
+    </div>
+    <div class="qgo">
+      {% if not current_user.is_authenticated %}
+        <a class="qbtn" href="{{ url_for('login', next=url_for('quiz_from_scan', no=scan_no, guest=1)) }}">Log in to take the quiz &rarr;</a>
+        <small>Free account, takes a minute</small>
+      {% elif quiz_left == 0 %}
+        <span class="qbtn off" aria-disabled="true">Start the quiz</span>
+        <small>No quizzes left today &middot; resets at midnight</small>
+      {% else %}
+        <form method="post" action="{{ url_for('quiz_from_scan', no=scan_no) }}" class="qform">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="qbtn" type="submit">Start the quiz &rarr;</button>
+        </form>
+        {% if quiz_left is not none %}<small>{{ quiz_left }} of {{ quiz_limit }} quizzes left today</small>{% endif %}
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
 </div>
 
 <script>

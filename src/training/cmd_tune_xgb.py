@@ -62,8 +62,8 @@ for name, est, fp in [("XGBoost default", XGBClassifier(n_estimators=300, max_de
 
 # Grid search done by hand (same as GridSearchCV: every combination x the same 5 folds), but
 # each finished combination is saved, so the script can be stopped and resumed:
-#   python src/cmd_tune_xgb.py              -> runs everything (resumes if a progress file exists)
-#   python src/cmd_tune_xgb.py --budget 150 -> stops after ~150 s; run again to continue
+#   python src/training/cmd_tune_xgb.py              -> runs everything (resumes if a progress file exists)
+#   python src/training/cmd_tune_xgb.py --budget 150 -> stops after ~150 s; run again to continue
 import sys, itertools
 from sklearn.model_selection import ParameterGrid
 budget = float(sys.argv[sys.argv.index("--budget") + 1]) if "--budget" in sys.argv else None

@@ -649,3 +649,36 @@ html[data-theme="light"] .msc-micon { background: rgba(192, 38, 211, .07); }
 html[data-theme="light"] .msc-sec.complete .msc-micon { background: rgba(14, 116, 144, .07); }
 html[data-theme="light"] .msc-sec.complete .msc-mstat { color: #fff; }
 html[data-theme="light"] .msc-win { background: rgba(14, 116, 144, .06); }
+
+/* admin pages: the sidebar panel runs all the way down to the footer (it used to stop short, leaving a
+   floating box at the bottom left), and the footer sits right under it */
+body:has(.admin) { display: flex; flex-direction: column; }
+body:has(.admin) .admin { flex: 1 0 auto; min-height: 0; width: 100%; }
+body:has(.admin) .sitefoot { position: static; margin: 0; max-width: none; width: 100%; box-sizing: border-box;
+                             padding-left: 238px; padding-right: 28px; }
+@media (max-width: 760px) { body:has(.admin) .sitefoot { padding-left: 16px; padding-right: 16px; } }
+
+/* result page: "Test yourself on this app" (quiz from this scan, no re-upload) */
+.quizcta { display: flex; align-items: center; gap: 22px; padding: 22px 26px; margin: 8px 0 26px; border-radius: 14px;
+           border: 1px solid rgba(255, 47, 214, .45); background: linear-gradient(90deg, rgba(255, 47, 214, .12), rgba(29, 233, 255, .06)); }
+.quizcta .qi { flex: 0 0 56px; height: 56px; border-radius: 12px; display: grid; place-items: center;
+               background: rgba(255, 47, 214, .16); color: var(--pink); }
+.quizcta h3 { margin: 0 0 4px; font-size: 19px; color: var(--text); }
+.quizcta p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+.quizcta p b { color: var(--text); }
+.quizcta .qtags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.quizcta .qtags span { font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.quizcta .qgo { margin-left: auto; flex: 0 0 auto; text-align: center; }
+.quizcta .qform { margin: 0; }
+.quizcta .qbtn { display: inline-block; background: var(--pink); color: #160016; font: inherit; font-weight: 700; padding: 12px 22px;
+                 border: 0; border-radius: 10px; text-decoration: none; cursor: pointer; }
+.quizcta .qbtn:hover { filter: brightness(1.08); }
+.quizcta .qbtn.off { background: rgba(255, 255, 255, .12); color: var(--muted); cursor: not-allowed; }
+.quizcta .qgo small { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
+@media (max-width: 640px) {
+  .quizcta { flex-direction: column; align-items: flex-start; }
+  .quizcta .qgo { margin-left: 0; width: 100%; }
+  .quizcta .qbtn { display: block; width: 100%; box-sizing: border-box; text-align: center; }
+}
+.quizcta .qtext { flex: 1 1 auto; text-align: left; }
+.quizcta .qtags { justify-content: flex-start; }

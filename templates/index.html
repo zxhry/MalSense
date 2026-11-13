@@ -41,7 +41,7 @@
 </form>
 {% endmacro %}
 
-{# Guests see this instead of an upload box: scans and quizzes need an account (daily limit per user) #}
+{# Guests see this instead of an upload box (the quiz needs an account) #}
 {% macro loginbox(label, anchor, icon="file") %}
 <a class="filebox loginbox" href="{{ url_for('login', next=url_for('home', _anchor=anchor)) }}">
   {% if icon == "quiz" %}{{ quizicon() }}{% else %}{{ fileicon() }}{% endif %}
@@ -128,13 +128,13 @@
       <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
       <b>03 &middot; Missions</b>
       <span>16 habits to protect your phone. Rank up from Rookie to Guardian.</span>
-      <em>Open checklist &rarr;</em>
+      <em>{{ "Open checklist" if current_user.is_authenticated else "Log in to open" }} &rarr;</em>
     </a>
     <a class="lab-path pink" href="{{ url_for('amanah') }}">
       <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span>
       <b>Digital Amanah</b>
       <span>Your phone and data are a trust. Islamic reminders, Maqasid Syariah and practical tips.</span>
-      <em>Explore &rarr;</em>
+      <em>{{ "Explore" if current_user.is_authenticated else "Log in to explore" }} &rarr;</em>
     </a>
     {% set report_url = url_for('report_apk') if current_user.is_authenticated else url_for('login', next=url_for('report_apk')) %}
     <a class="lab-path" href="{{ report_url }}">
@@ -145,7 +145,7 @@
     </a>
   </div>
 
-  {% if not current_user.is_authenticated %}<p class="note"><a href="{{ url_for('login') }}">Log in</a> or <a href="{{ url_for('register') }}">register</a> to analyse APKs, take quizzes, save your scan history and download reports.</p>{% endif %}
+  {% if not current_user.is_authenticated %}<p class="note">As a guest you can scan APKs. <a href="{{ url_for('register') }}">Register</a> or <a href="{{ url_for('login') }}">log in</a> to take the quiz, save your scan history, download reports and open the checklist and Digital Amanah.</p>{% endif %}
 </div>
 
 <script>

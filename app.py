@@ -9,11 +9,11 @@ Done : Splash (5.1), Home (5.2/5.3), Register (5.4), Login (5.5), Scan results (
        to the admin, admin adds reported APKs to the training data and retrains (Reports page).
 Make an admin: flask --app app make-admin your@email.com
 """
-import os, re, sys, uuid, time, hashlib, hmac
+import os, re, sys, uuid, time, hashlib, secrets
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 import click
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlsplit
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash, abort, send_file, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -37,6 +37,8 @@ from explain import PERMISSION_TEXT
 from advice import advice_for                            # "What to do next" box on the results page
 import google_login as google                            # "Continue with Google" sign-in
 import feedback as fb                                    # Feedback form (emails the owner)
+import checklist as C                                    # Mobile Security Checklist content
+import amanah as A                                       # Digital Amanah page content
 import io
 
 app = Flask(__name__)
@@ -96,7 +98,6 @@ app.config["WTF_CSRF_TIME_LIMIT"] = None
 def csrf_failed(e):
     """Friendly message instead of the plain "Bad Request" page; send the user back to try again."""
     flash("This page was open for too long or your session changed. Please try again.")
-    from urllib.parse import urlsplit
     ref = urlsplit(request.referrer or "")
     back = safe_next(ref.path) if ref.netloc == request.host and ref.path not in ("", "/") else ""
     return redirect(back or url_for("home"))
@@ -109,7 +110,7 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 REPORT_DIR = os.path.join(os.path.dirname(__file__), "reported_apks")   # APKs users reported (kept for the admin)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")   # name@domain.tld
 
 
 @login_manager.user_loader
@@ -143,10 +144,7 @@ def make_admin(email):
     print(f"{user.username} ({user.email}) is now an admin.")
 
 
-# ------------------------------------------------------------------ pages
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")   # stricter email check (overrides the one above)
-
-
+# ------------------------------------------------------------------ start pages
 @app.route("/")
 def splash():                                           # Figure 5.1
     return render_template("splash.html")
@@ -198,9 +196,12 @@ def receive_apk(folder=UPLOAD_DIR, suffix=".apk"):
 # Admins are never limited.
 SCAN_LIMIT = int(os.getenv("SCAN_LIMIT_PER_DAY", "3") or 0)
 QUIZ_LIMIT = int(os.getenv("QUIZ_LIMIT_PER_DAY", "3") or 0)
-# True (default) = users must log in to scan, so every scan counts toward their daily limit.
-# Set REQUIRE_LOGIN_TO_SCAN=false to let guests scan (the quiz always needs an account).
-REQUIRE_LOGIN_TO_SCAN = os.getenv("REQUIRE_LOGIN_TO_SCAN", "true").strip().lower() not in ("0", "false", "no", "off")
+# Guests (no account) may scan APKs and read the checklist and Digital Amanah: GUEST_SCAN_LIMIT_PER_DAY scans a day per network (IP address).
+# Everything else (quiz, history, reports, checklist, Digital Amanah) needs an account.
+# Set REQUIRE_LOGIN_TO_SCAN=true to make scanning need an account too.
+GUEST_SCAN_LIMIT = int(os.getenv("GUEST_SCAN_LIMIT_PER_DAY", "3") or 0)
+GUEST_SCANS = {}                                        # ip -> [times of today's guest scans] (memory only)
+REQUIRE_LOGIN_TO_SCAN = os.getenv("REQUIRE_LOGIN_TO_SCAN", "false").strip().lower() not in ("0", "false", "no", "off")
 app.jinja_env.globals["REQUIRE_LOGIN_TO_SCAN"] = REQUIRE_LOGIN_TO_SCAN
 MYT = timezone(timedelta(hours=8))                      # Malaysia time (no daylight saving)
 
@@ -217,10 +218,29 @@ def usage_today(user):
             "quizzes": QuizLog.query.filter(QuizLog.user_id == user.user_id, QuizLog.created_at >= since).count()}
 
 
+def guest_scans_today():
+    """How many scans this guest's network (IP address) has made today. Kept in memory, so a server
+    restart clears it - good enough to protect the VirusTotal / server limits."""
+    since = today_start()
+    ip = request.remote_addr or "?"
+    times = [t for t in GUEST_SCANS.get(ip, []) if t >= since]
+    GUEST_SCANS[ip] = times
+    return len(times)
+
+
+def count_guest_scan():
+    GUEST_SCANS.setdefault(request.remote_addr or "?", []).append(datetime.now())
+
+
 def limit_reached(kind):
-    """A message if the current user has used up today's scans / quizzes, otherwise None."""
+    """A message if the current user (or guest) has used up today's scans / quizzes, otherwise None."""
+    if not current_user.is_authenticated:
+        if kind == "scans" and GUEST_SCAN_LIMIT and guest_scans_today() >= GUEST_SCAN_LIMIT:
+            return (f"Guests can scan {GUEST_SCAN_LIMIT} APKs a day. Register for a free account to scan more "
+                    "and to take the awareness quiz.")
+        return None
     limit = SCAN_LIMIT if kind == "scans" else QUIZ_LIMIT
-    if not limit or not current_user.is_authenticated or current_user.is_admin:
+    if not limit or current_user.is_admin:
         return None
     if usage_today(current_user)[kind] >= limit:
         what = "APK scans" if kind == "scans" else "quizzes"
@@ -247,7 +267,7 @@ def scan():                                             # Figure 5.6 - home sect
     start = time.time()
     try:
         result = full_scan(path)
-        if result.get("risk") != "LOW":                  # 2nd AI model: what kind of malware is it?
+        if result.get("risk") != "LOW":                  # intents + API calls found in the APK (no AI model)
             result["malware_type"] = safe_malware_type(path, app.logger.warning)
     except Exception as e:
         app.logger.warning(f"Could not analyse {filename}: {e}")
@@ -260,6 +280,8 @@ def scan():                                             # Figure 5.6 - home sect
             os.remove(path)                              # uploaded APKs are not kept
 
     duration = time.time() - start
+    if not current_user.is_authenticated:
+        count_guest_scan()                               # only successful scans count toward the guest limit
     scan = save_scan(result, filename, duration)      # Figure 4.3: save scan record to MySQL
     if scan:
         # Registered users: number comes from the database (their 1st, 2nd, 3rd scan ...).
@@ -325,9 +347,15 @@ def render_result(scan, no, links):
         size_bytes = 0
     r = dict(d, sha256=scan.file_hash, package=scan.package_name, file_size=size_bytes,
              min_sdk=d.get("min_sdk") or (scan.sdk_version or "").replace("API ", "") or None)
+    quiz_left = None
+    if current_user.is_authenticated and not current_user.is_admin and QUIZ_LIMIT:
+        try:
+            quiz_left = max(QUIZ_LIMIT - usage_today(current_user)["quizzes"], 0)
+        except Exception:
+            db.session.rollback()
     return render_template("result.html", r=r, filename=scan.filename, duration=scan.scan_duration or 0,
                            saved=current_user.is_authenticated and scan.user_id == current_user.user_id,
-                           scan_no=no, links=links,
+                           scan_no=no, links=links, quiz_left=quiz_left, quiz_limit=QUIZ_LIMIT,
                            scanned_on=scan.scanned_at.strftime("%d %b %Y, %H:%M"))
 
 
@@ -481,7 +509,6 @@ def google_login():
 
 @app.route("/auth/google/callback")
 def google_callback():
-    import secrets
     state, verifier = session.pop("g_state", None), session.pop("g_verifier", None)
     nxt = session.pop("g_next", "")
     if request.args.get("error"):                        # user pressed Cancel on Google's page
@@ -575,13 +602,11 @@ def feedback():                                         # enquiries / complaints
 
 @app.route("/checklist")
 def checklist():                                        # Mobile Security Checklist (home page band)
-    import checklist as C
     return render_template("checklist.html", sections=C.SECTIONS, total=sum(len(x["items"]) for x in C.SECTIONS))
 
 
 @app.route("/amanah")
 def amanah():                                           # Digital Amanah: Islamic reminder + Maqasid + safety tips
-    import amanah as A
     today = datetime.now()                               # Monday = 0 ... Sunday = 6 -> a new reminder every day
     return render_template("amanah.html", intro=A.INTRO, maqasid=A.MAQASID, advice=A.ADVICE,
                            reminder=A.REMINDERS[today.weekday() % len(A.REMINDERS)],
@@ -688,7 +713,7 @@ def reset_password(token):
     return render_template("reset.html", token=token, error=error)
 
 
-# ------------------------------------------------------------------ coming in later steps
+# ------------------------------------------------------------------ My History + downloadable reports
 @app.route("/history")
 @login_required
 def history():                                          # UC05 - registered users only
@@ -759,10 +784,39 @@ def learn():
     finally:
         if os.path.exists(path):
             os.remove(path)
-    details = {k: r.get(k) for k in ("app_name", "verdict", "malware_probability", "dangerous_permissions")}
-    details["explanation"] = [{"label": e["label"], "feature": e["feature"]} for e in r.get("explanation", [])]
-    details["malware_type"] = mtype                       # lets the quiz use the intents and API calls found in THIS app
-    return make_quiz(details, r["sha256"], filename)
+    r["malware_type"] = mtype                             # lets the quiz use the intents and API calls found in THIS app
+    return make_quiz(quiz_details(r), r["sha256"], filename)
+
+
+@app.route("/result/<int:no>/quiz", methods=["GET", "POST"])
+@login_required
+def quiz_from_scan(no):
+    """'Test yourself on this app' button at the bottom of the result page: build the quiz from the scan that
+    is already saved, so the APK does not have to be uploaded again.
+    ?guest=1 = the scan was made as a guest just before logging in (its number is kept in the session)."""
+    if request.method == "GET" and not request.args.get("guest"):
+        return redirect(url_for("result", no=no))       # quizzes are only made by the button (POST) or after login
+    if request.args.get("guest"):
+        scan_id = guest_scans().get(str(no))
+        scan = db.session.get(Scan, scan_id) if scan_id else None
+    else:
+        scan = Scan.query.filter_by(user_id=current_user.user_id, user_scan_no=no).first()
+    if not scan or not scan.details:
+        flash("That scan could not be found - please scan the APK again.")
+        return redirect(url_for("home", _anchor="scan"))
+    msg = limit_reached("quizzes")
+    if msg:
+        flash(msg)
+        return redirect(url_for("result", no=no) if not request.args.get("guest") else url_for("home"))
+    return make_quiz(quiz_details(scan.details), scan.file_hash, scan.filename)
+
+
+def quiz_details(r):
+    """The facts about one app that the quiz is built from (from a fresh scan or a saved one)."""
+    d = {k: r.get(k) for k in ("app_name", "verdict", "malware_probability", "dangerous_permissions", "malware_type")}
+    d["explanation"] = [{"label": e.get("label"), "feature": e.get("feature")}
+                        for e in r.get("explanation") or [] if isinstance(e, dict)]
+    return d
 
 
 def make_quiz(details, sha256, filename):
@@ -788,6 +842,7 @@ def my_quiz(t):
 
 
 @app.route("/learn/<t>")
+@login_required
 def learn_quiz(t):
     q, filename = my_quiz(t)
     if not q:
@@ -1099,6 +1154,11 @@ def shortname(name, keep=36):
 @app.context_processor
 def daily_usage():
     """How many scans / quizzes the user has left today - shown under the two upload boxes on Home."""
+    if request.endpoint == "home" and not current_user.is_authenticated:
+        if GUEST_SCAN_LIMIT:
+            return {"left": {"scans": max(GUEST_SCAN_LIMIT - guest_scans_today(), 0), "quizzes": None},
+                    "limits": {"scans": GUEST_SCAN_LIMIT, "quizzes": None}}
+        return {"left": None, "limits": None}
     if request.endpoint == "home" and current_user.is_authenticated and not current_user.is_admin:
         try:
             used = usage_today(current_user)

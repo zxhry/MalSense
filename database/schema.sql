@@ -1,8 +1,11 @@
 -- =====================================================================
--- MalSense database - matches thesis Figure 4.6 (Entity-Relationship Diagram)
+-- MalSense database (complete) - matches thesis Figure 4.6 (Entity-Relationship Diagram)
+-- One file creates everything: users, scans, reports, quiz_log (+ quiz_cache for the online version).
 -- Run inside the MySQL client (logged in as root):
 --     source C:/Users/User/Desktop/MalSense/database/schema.sql
 -- BEFORE running: replace  CHANGE_ME_app_password  below with your own password.
+-- (Online on TiDB Cloud use database/tidb_setup.sql in the deploy copy - same tables, no CREATE USER.)
+-- Older step-by-step upgrades are kept in database/migrations/ for reference only.
 -- =====================================================================
 
 -- 1. The database
@@ -17,18 +20,20 @@ FLUSH PRIVILEGES;
 
 USE malsense;
 
--- 3. USERS table (Figure 4.6)
+-- 3. USERS
 CREATE TABLE IF NOT EXISTS users (
   user_id        INT AUTO_INCREMENT PRIMARY KEY,
   username       VARCHAR(100)  NOT NULL,                 -- full name shown in the app
   email          VARCHAR(255)  NOT NULL UNIQUE,          -- used to log in; must be unique
   password_hash  VARCHAR(255)  NOT NULL,                 -- bcrypt hash, never the real password
   role           ENUM('user','admin') NOT NULL DEFAULT 'user',
+  is_active      TINYINT(1)    NOT NULL DEFAULT 1,       -- admin can deactivate an account
+  is_verified    BOOLEAN       NOT NULL DEFAULT FALSE,   -- clicked the email verification link
   created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_login     DATETIME      NULL
 ) ENGINE=InnoDB;
 
--- 4. SCANS table (Figure 4.6). user_id is NULL for guest scans (no account needed to scan)
+-- 4. SCANS - user_id is NULL for guest scans
 CREATE TABLE IF NOT EXISTS scans (
   scan_id        INT AUTO_INCREMENT PRIMARY KEY,
   user_id        INT           NULL,
@@ -43,12 +48,46 @@ CREATE TABLE IF NOT EXISTS scans (
   vt_result      VARCHAR(50)   NULL,                     -- e.g. "0/67" or "not found"
   scan_duration  FLOAT         NULL,                     -- seconds
   scanned_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  details        JSON          NULL,                     -- full analysis (result page + downloadable report)
   CONSTRAINT fk_scans_user FOREIGN KEY (user_id) REFERENCES users(user_id)
     ON DELETE SET NULL,                                   -- deleting a user keeps the scan logs
   UNIQUE KEY uq_user_scan_no (user_id, user_scan_no)
 ) ENGINE=InnoDB;
 
--- 5. Show the result
+-- 5. REPORTS - APKs users send to the admin (could not be analysed / result looks wrong)
+CREATE TABLE IF NOT EXISTS reports (
+  report_id      INT AUTO_INCREMENT PRIMARY KEY,
+  user_id        INT           NULL,
+  filename       VARCHAR(255)  NOT NULL,                 -- name the user uploaded
+  stored_name    VARCHAR(64)   NOT NULL,                 -- random file name in reported_apks/
+  file_hash      VARCHAR(64)   NOT NULL,                 -- SHA-256
+  file_size      INT           NOT NULL,                 -- bytes
+  reason         ENUM('scan_failed','wrong_result','new_malware','other') NOT NULL,
+  message        TEXT          NULL,
+  contact_email  VARCHAR(255)  NULL,
+  status         ENUM('new','added_malware','added_benign','dismissed') NOT NULL DEFAULT 'new',
+  created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at    DATETIME      NULL,
+  CONSTRAINT fk_reports_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+    ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 6. QUIZ_LOG - one row per quiz made (daily quiz limit)
+CREATE TABLE IF NOT EXISTS quiz_log (
+  log_id      INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT          NOT NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_quiz_log_user_day (user_id, created_at),
+  CONSTRAINT fk_quiz_log_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 7. QUIZ_CACHE - saved quizzes + per-app question history (used by the online version;
+--    the laptop version keeps them as files in quiz_cache/, so this table simply stays empty there)
+CREATE TABLE IF NOT EXISTS quiz_cache (
+  cache_key   VARCHAR(80)  NOT NULL PRIMARY KEY,          -- "quiz_<id>" or "history_<sha256>"
+  data        JSON         NOT NULL,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 8. Show the result
 SHOW TABLES;
-DESCRIBE users;
-DESCRIBE scans;
